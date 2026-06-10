@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   User, Mail, MapPin, Calendar, Award, Plus, X, Edit3,
@@ -512,7 +512,7 @@ function DreamToRoleMapper() {
 }
 
 // ===== MAIN PROFILE PAGE =====
-export default function ProfilePage() {
+export default function ProfilePage({ gapBadgeUnlocked = false }) {
   // Editable profile state
   const [profile, setProfile] = useState({
     name: 'Kwame Asante',
@@ -922,7 +922,28 @@ export default function ProfilePage() {
                   </form>
                 )}
 
-                {/* Certificates list */}
+              {/* === GAP CERTIFIED BADGE (from Micro-Learning) === */}
+              {gapBadgeUnlocked && (
+                <div className="mb-5 animate-fade-in-up">
+                  <div className="relative flex items-center gap-4 p-4 bg-gradient-to-r from-agro-500 to-agro-600 rounded-2xl border border-agro-400 shadow-lg shadow-agro-500/20 overflow-hidden">
+                    <div className="absolute inset-0 bg-grid opacity-10" />
+                    <div className="relative w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0 border border-white/30">
+                      <span className="text-3xl">🏅</span>
+                    </div>
+                    <div className="relative flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-white font-display font-bold">GAP Certified</p>
+                        <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-semibold rounded-full">New!</span>
+                      </div>
+                      <p className="text-xs text-agro-100 mt-0.5">Good Agricultural Practices · AgroNet Africa Academy</p>
+                      <p className="text-xs text-agro-200 mt-0.5">Unlocked via Micro-Learning · Just now</p>
+                    </div>
+                    <CheckCircle className="relative w-6 h-6 text-white flex-shrink-0" />
+                  </div>
+                </div>
+              )}
+
+              {/* Certificates list */}
                 {certificates.length > 0 ? (
                   <div className="grid sm:grid-cols-2 gap-4">
                     {certificates.map((cert, index) => (

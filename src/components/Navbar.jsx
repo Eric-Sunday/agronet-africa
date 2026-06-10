@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Menu, X, Leaf, ArrowRight, Home, Briefcase, UserCircle
+  Menu, X, Leaf, ArrowRight, Home, Briefcase, UserCircle, Radio
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -24,6 +24,7 @@ export default function Navbar() {
   const navLinks = [
     { label: 'Home', to: '/', icon: Home },
     { label: 'Job Board', to: '/jobs', icon: Briefcase },
+    { label: 'The Kilombo', to: '/kilombo', icon: Radio },
     { label: 'Profile', to: '/profile', icon: UserCircle },
   ];
 
