@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+﻿import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Menu, X, Leaf, ArrowRight, Home, Briefcase, UserCircle, Radio
+  Menu, X, Leaf, ArrowRight, Home, Briefcase, UserCircle, Radio, LogOut, LogIn
 } from 'lucide-react';
 
-export default function Navbar() {
+export default function Navbar({ currentUser, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -33,6 +34,22 @@ export default function Navbar() {
     return location.pathname.startsWith(path);
   };
 
+  const handleLogout = () => {
+    onLogout?.();
+    navigate('/');
+  };
+
+  // Role label shortener
+  const roleLabel = (role) => {
+    if (!role) return '';
+    return role.replace('_', ' ').replace('Agribusiness ', 'Employer ');
+  };
+
+  // Get initials for avatar
+  const initials = currentUser?.name
+    ? currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+    : '?';
+
   return (
     <nav
       id="navbar"
@@ -53,12 +70,8 @@ export default function Navbar() {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-earth-400 rounded-full animate-pulse-gentle" />
             </div>
             <div>
-              <span className="text-xl font-display font-bold text-agro-900">
-                AgroNet
-              </span>
-              <span className="text-xl font-display font-bold text-agro-500 ml-1">
-                Africa
-              </span>
+              <span className="text-xl font-display font-bold text-agro-900">AgroNet</span>
+              <span className="text-xl font-display font-bold text-agro-500 ml-1">Africa</span>
             </div>
           </Link>
 
@@ -81,15 +94,40 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Desktop CTA */}
+          {/* Desktop Auth */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/profile" className="btn-ghost text-sm" id="nav-login-btn">
-              Log In
-            </Link>
-            <Link to="/jobs" className="btn-primary text-sm !px-6 !py-2.5" id="nav-signup-btn">
-              Get Started
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {currentUser ? (
+              // â”€â”€ Logged-in state â”€â”€
+              <div className="flex items-center gap-3">
+                <Link to="/profile" className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-agro-50 transition-colors group">
+                  <div className="w-9 h-9 bg-gradient-to-br from-agro-500 to-agro-700 rounded-lg flex items-center justify-center shadow-sm">
+                    <span className="text-white text-xs font-bold">{initials}</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-gray-900 leading-tight">{currentUser.name.split(' ')[0]}</p>
+                    <p className="text-xs text-agro-600 leading-tight">{roleLabel(currentUser.role)}</p>
+                  </div>
+                </Link>
+                <button
+                  id="nav-logout-btn"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-500 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                >
+                  <LogOut className="w-4 h-4" /> Log Out
+                </button>
+              </div>
+            ) : (
+              // â”€â”€ Logged-out state â”€â”€
+              <>
+                <Link to="/login" className="btn-ghost text-sm" id="nav-login-btn">
+                  <LogIn className="w-4 h-4" /> Log In
+                </Link>
+                <Link to="/register" className="btn-primary text-sm !px-6 !py-2.5" id="nav-signup-btn">
+                  Get Started
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -105,7 +143,7 @@ export default function Navbar() {
         {/* Mobile Menu */}
         <div
           className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${
-            isOpen ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+            isOpen ? 'max-h-[600px] opacity-100 mt-4' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="glass-card p-4 space-y-1">
@@ -123,14 +161,36 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+
             <div className="pt-3 mt-3 border-t border-gray-100 space-y-2">
-              <Link to="/profile" className="w-full btn-ghost text-sm justify-center block text-center">
-                Log In
-              </Link>
-              <Link to="/jobs" className="w-full btn-primary text-sm justify-center flex">
-                Get Started
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
+              {currentUser ? (
+                <>
+                  <div className="flex items-center gap-3 px-4 py-3 bg-agro-50 rounded-xl">
+                    <div className="w-9 h-9 bg-gradient-to-br from-agro-500 to-agro-700 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">{initials}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{currentUser.name}</p>
+                      <p className="text-xs text-agro-600">{roleLabel(currentUser.role)}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-red-500 bg-red-50 rounded-xl hover:bg-red-100 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" /> Log Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="w-full btn-ghost text-sm justify-center flex">
+                    <LogIn className="w-4 h-4" /> Log In
+                  </Link>
+                  <Link to="/register" className="w-full btn-primary text-sm justify-center flex">
+                    Get Started <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -138,3 +198,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

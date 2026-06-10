@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Leaf, ChevronRight, ArrowRight, Users, Briefcase,
@@ -371,7 +371,7 @@ function RolesSection() {
             <span className="text-gradient-green">Make an Impact</span>
           </h2>
           <p className="text-lg text-gray-600 leading-relaxed">
-            Whether you're hiring, job hunting, or championing change in your community — 
+            Whether you're hiring, job hunting, or championing change in your community â€” 
             AgroNet Africa has a role designed for you.
           </p>
         </div>
@@ -477,7 +477,7 @@ function ImpactSection() {
             <span className="text-gradient-earth">Tell Our Story</span>
           </h2>
           <p className="text-lg text-agro-200/80 leading-relaxed">
-            From Lagos to Nairobi, Dakar to Accra — AgroNet Africa is 
+            From Lagos to Nairobi, Dakar to Accra â€” AgroNet Africa is 
             transforming how the continent approaches agricultural employment.
           </p>
         </div>
@@ -531,7 +531,7 @@ function CommunitySection() {
             </h2>
             <p className="text-lg text-white/85 max-w-2xl mx-auto mb-10 leading-relaxed">
               Whether you're an employer seeking talent, a professional chasing opportunities, 
-              or a champion of agricultural innovation — your journey starts here.
+              or a champion of agricultural innovation â€” your journey starts here.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
@@ -560,10 +560,10 @@ function CommunitySection() {
 
 
 // ===== MAIN HOME PAGE COMPONENT =====
-export default function HomePage() {
+export default function HomePage({ currentUser, onLogout }) {
   return (
     <div className="min-h-screen bg-white custom-scrollbar">
-      <Navbar />
+      <Navbar currentUser={currentUser} onLogout={onLogout} />
       <HeroSection />
       <AboutSection />
       <RolesSection />

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   User, Mail, MapPin, Calendar, Award, Plus, X, Edit3,
@@ -336,7 +336,7 @@ function DreamToRoleMapper() {
 
         {/* Example chips */}
         <div>
-          <p className="text-xs font-medium text-gray-400 mb-2.5">ðŸ’¡ Try an example:</p>
+          <p className="text-xs font-medium text-gray-400 mb-2.5">Ã°Å¸â€™Â¡ Try an example:</p>
           <div className="flex flex-wrap gap-2">
             {exampleDreams.slice(0, 4).map((example, i) => (
               <button
@@ -484,7 +484,7 @@ function DreamToRoleMapper() {
             <div className="absolute inset-0 bg-grid opacity-10" />
             <div className="relative">
               <h3 className="text-xl font-display font-bold text-white mb-2">
-                Ready to start your journey? ðŸš€
+                Ready to start your journey? Ã°Å¸Å¡â‚¬
               </h3>
               <p className="text-sm text-white/80 mb-5 max-w-xl mx-auto">
                 Save this roadmap to your profile and begin with Step 1. Track your progress as you earn
@@ -512,7 +512,7 @@ function DreamToRoleMapper() {
 }
 
 // ===== MAIN PROFILE PAGE =====
-export default function ProfilePage({ gapBadgeUnlocked = false }) {
+export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onLogout }) {
   // Editable profile state
   const [profile, setProfile] = useState({
     name: 'Kwame Asante',
@@ -619,7 +619,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false }) {
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      <Navbar />
+      <Navbar currentUser={currentUser} onLogout={onLogout} />
 
       {/* Profile Header */}
       <section className="relative pt-24 pb-0 overflow-hidden">
@@ -661,7 +661,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false }) {
                       <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
                         <MapPin className="w-4 h-4" />
                         {profile.location}
-                        <span className="text-gray-300 mx-1">â€¢</span>
+                        <span className="text-gray-300 mx-1">Ã¢â‚¬Â¢</span>
                         <Mail className="w-4 h-4" />
                         {profile.email}
                       </p>
@@ -726,7 +726,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false }) {
       <section className="py-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column â€” Bio, Skills, Certs, Career Mapper */}
+            {/* Left Column Ã¢â‚¬â€ Bio, Skills, Certs, Career Mapper */}
             <div className="lg:col-span-2 space-y-8">
               {/* Bio Section */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -748,7 +748,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false }) {
                 )}
               </div>
 
-              {/* Edit form â€” Name / Location / Email */}
+              {/* Edit form Ã¢â‚¬â€ Name / Location / Email */}
               {isEditing && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm animate-fade-in-up space-y-5">
                   <h2 className="text-lg font-display font-bold text-gray-900 mb-2 flex items-center gap-2">
@@ -928,15 +928,15 @@ export default function ProfilePage({ gapBadgeUnlocked = false }) {
                   <div className="relative flex items-center gap-4 p-4 bg-gradient-to-r from-agro-500 to-agro-600 rounded-2xl border border-agro-400 shadow-lg shadow-agro-500/20 overflow-hidden">
                     <div className="absolute inset-0 bg-grid opacity-10" />
                     <div className="relative w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0 border border-white/30">
-                      <span className="text-3xl">🏅</span>
+                      <span className="text-3xl">ðŸ…</span>
                     </div>
                     <div className="relative flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-white font-display font-bold">GAP Certified</p>
                         <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-semibold rounded-full">New!</span>
                       </div>
-                      <p className="text-xs text-agro-100 mt-0.5">Good Agricultural Practices · AgroNet Africa Academy</p>
-                      <p className="text-xs text-agro-200 mt-0.5">Unlocked via Micro-Learning · Just now</p>
+                      <p className="text-xs text-agro-100 mt-0.5">Good Agricultural Practices Â· AgroNet Africa Academy</p>
+                      <p className="text-xs text-agro-200 mt-0.5">Unlocked via Micro-Learning Â· Just now</p>
                     </div>
                     <CheckCircle className="relative w-6 h-6 text-white flex-shrink-0" />
                   </div>
@@ -968,7 +968,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false }) {
               <DreamToRoleMapper />
             </div>
 
-            {/* Right Column â€” Sidebar */}
+            {/* Right Column Ã¢â‚¬â€ Sidebar */}
             <div className="space-y-6">
               {/* Member since */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">

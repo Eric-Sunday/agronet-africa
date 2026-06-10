@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search, MapPin, DollarSign, Clock, Tag, Filter,
@@ -58,7 +58,7 @@ function JobCard({ job, index }) {
       }`}
       style={{ transitionDelay: `${(index % 6) * 80}ms` }}
     >
-      {/* Top row — Company & Type */}
+      {/* Top row â€” Company & Type */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className={`w-12 h-12 ${color.bg} rounded-xl flex items-center justify-center border ${color.border}`}>
@@ -302,7 +302,7 @@ function PostJobForm({ onSubmit, onCancel }) {
           )}
         </div>
 
-        {/* Location & Salary — side by side */}
+        {/* Location & Salary â€” side by side */}
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <label htmlFor="farm-location" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -333,7 +333,7 @@ function PostJobForm({ onSubmit, onCancel }) {
               type="text"
               value={form.salary}
               onChange={(e) => { setForm({ ...form, salary: e.target.value }); if (errors.salary) setErrors({ ...errors, salary: '' }); }}
-              placeholder="e.g. ₦350,000 - ₦500,000/month"
+              placeholder="e.g. â‚¦350,000 - â‚¦500,000/month"
               className={`w-full px-4 py-3.5 rounded-xl border-2 ${errors.salary ? 'border-red-300 bg-red-50/50' : 'border-gray-200'} text-gray-800 placeholder-gray-400 focus:border-agro-400 focus:ring-4 focus:ring-agro-100 transition-all duration-200 outline-none`}
             />
             {errors.salary && (
@@ -470,7 +470,7 @@ function PostJobForm({ onSubmit, onCancel }) {
 
 
 // ===== MAIN JOB BOARD PAGE =====
-export default function JobBoardPage({ jobs, onAddJob }) {
+export default function JobBoardPage({ jobs, onAddJob, currentUser, onLogout }) {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
@@ -487,7 +487,7 @@ export default function JobBoardPage({ jobs, onAddJob }) {
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      <Navbar />
+      <Navbar currentUser={currentUser} onLogout={onLogout} />
 
       {/* Page Header */}
       <section className="relative pt-28 pb-12 overflow-hidden">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Mic, MicOff, Square, Play, Pause, Users, MessageCircle,
@@ -31,7 +31,7 @@ const SEED_POSTS = [
     avatar: 'FO',
     avatarColor: 'from-earth-400 to-earth-600',
     timestamp: '4 hours ago',
-    text: 'Voice note from the greenhouse 🌿',
+    text: 'Voice note from the greenhouse ðŸŒ¿',
     type: 'audio',
     audioDuration: '0:32',
     audioLabel: 'Greenhouse temperature update',
@@ -46,7 +46,7 @@ const SEED_POSTS = [
     avatar: 'CE',
     avatarColor: 'from-soil-400 to-soil-600',
     timestamp: '6 hours ago',
-    text: 'Warning to all catfish farmers in the southeast: water temperature dropped sharply last night. Lost 300 fingerlings. Please monitor your ponds carefully this week. Stay safe out there 🙏',
+    text: 'Warning to all catfish farmers in the southeast: water temperature dropped sharply last night. Lost 300 fingerlings. Please monitor your ponds carefully this week. Stay safe out there ðŸ™',
     type: 'text',
     likes: 51,
     replies: 14,
@@ -59,7 +59,7 @@ const SEED_POSTS = [
     avatar: 'NA',
     avatarColor: 'from-purple-400 to-purple-600',
     timestamp: '1 day ago',
-    text: 'Field update — recording from my tomato farm',
+    text: 'Field update â€” recording from my tomato farm',
     type: 'audio',
     audioDuration: '1:04',
     audioLabel: 'Pest control success story',
@@ -155,7 +155,7 @@ function AudioPlayer({ post }) {
           </div>
           <div className="flex justify-between mt-1">
             <span className="text-xs text-agro-500 font-medium">
-              {isPlaying ? '▶ Playing...' : '● Audio Note'}
+              {isPlaying ? 'â–¶ Playing...' : 'â— Audio Note'}
             </span>
             <span className="text-xs text-gray-400">{post.audioDuration}</span>
           </div>
@@ -186,7 +186,7 @@ function PostCard({ post, onUpdate }) {
           <div>
             <p className="font-display font-bold text-gray-900 text-sm">{post.author}</p>
             <p className="text-xs text-gray-400 flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> {post.location} · {post.timestamp}
+              <MapPin className="w-3 h-3" /> {post.location} Â· {post.timestamp}
             </p>
           </div>
         </div>
@@ -293,7 +293,7 @@ function AudioRecorder({ onPost }) {
             <div className="absolute inset-0 rounded-full bg-agro-400 animate-ping opacity-20 group-hover:opacity-30" />
             <Mic className="w-8 h-8 text-white mb-0.5" />
           </button>
-          <p className="text-sm font-semibold text-gray-600">🎙️ Record Audio Note</p>
+          <p className="text-sm font-semibold text-gray-600">ðŸŽ™ï¸ Record Audio Note</p>
           <p className="text-xs text-gray-400">Tap the mic to start recording</p>
         </div>
       )}
@@ -332,7 +332,7 @@ function CreatePostForm({ onAddPost }) {
       avatar: 'KA',
       avatarColor: 'from-agro-500 to-agro-700',
       timestamp: 'Just now',
-      text: 'Shared an audio note from the field 🎙️',
+      text: 'Shared an audio note from the field ðŸŽ™ï¸',
       type: 'audio',
       audioDuration: duration,
       audioLabel: 'My field recording',
@@ -374,7 +374,7 @@ function CreatePostForm({ onAddPost }) {
           }`}
         >
           {showRecorder ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          {showRecorder ? 'Hide Recorder' : '🎙️ Record Audio Note'}
+          {showRecorder ? 'Hide Recorder' : 'ðŸŽ™ï¸ Record Audio Note'}
         </button>
 
         <button
@@ -440,7 +440,7 @@ function MicroLearningSidebar({ onUnlockGAP, gapUnlocked }) {
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
           <Clock className="w-3.5 h-3.5" />
           <span>~15 min</span>
-          <span className="text-gray-200">•</span>
+          <span className="text-gray-200">â€¢</span>
           <Award className="w-3.5 h-3.5" />
           <span>1 badge</span>
         </div>
@@ -449,7 +449,7 @@ function MicroLearningSidebar({ onUnlockGAP, gapUnlocked }) {
           <div className="flex items-center gap-2 px-4 py-3 bg-agro-100 rounded-xl border border-agro-200">
             <CheckCircle className="w-5 h-5 text-agro-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-bold text-agro-800">Completed! 🎉</p>
+              <p className="text-sm font-bold text-agro-800">Completed! ðŸŽ‰</p>
               <p className="text-xs text-agro-600">GAP Certified badge added to your profile</p>
             </div>
           </div>
@@ -466,16 +466,16 @@ function MicroLearningSidebar({ onUnlockGAP, gapUnlocked }) {
 
         {justUnlocked && (
           <div className="mt-3 p-3 bg-agro-600 rounded-xl text-white text-xs text-center font-semibold animate-bounce">
-            🏅 GAP Certified badge added to your Profile!
+            ðŸ… GAP Certified badge added to your Profile!
           </div>
         )}
       </div>
 
       {/* More modules (locked) */}
       {[
-        { icon: '🌊', title: 'Irrigation Management', duration: '20 min' },
-        { icon: '🐟', title: 'Aquaculture Basics', duration: '25 min' },
-        { icon: '🌱', title: 'Organic Farming 101', duration: '18 min' },
+        { icon: 'ðŸŒŠ', title: 'Irrigation Management', duration: '20 min' },
+        { icon: 'ðŸŸ', title: 'Aquaculture Basics', duration: '25 min' },
+        { icon: 'ðŸŒ±', title: 'Organic Farming 101', duration: '18 min' },
       ].map((mod) => (
         <div key={mod.title} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm opacity-60">
           <div className="flex items-center gap-3">
@@ -484,7 +484,7 @@ function MicroLearningSidebar({ onUnlockGAP, gapUnlocked }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-700 truncate">{mod.title}</p>
-              <p className="text-xs text-gray-400">{mod.duration} · Coming soon</p>
+              <p className="text-xs text-gray-400">{mod.duration} Â· Coming soon</p>
             </div>
             <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex-shrink-0" />
           </div>
@@ -518,7 +518,7 @@ function MicroLearningSidebar({ onUnlockGAP, gapUnlocked }) {
 
 
 // ===== MAIN KILOMBO PAGE =====
-export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked }) {
+export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked, currentUser, onLogout }) {
   const [posts, setPosts] = useState(SEED_POSTS);
 
   const handleAddPost = (newPost) => {
@@ -527,7 +527,7 @@ export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked }) {
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      <Navbar />
+      <Navbar currentUser={currentUser} onLogout={onLogout} />
 
       {/* Page Header */}
       <section className="relative pt-28 pb-12 overflow-hidden">
@@ -542,7 +542,7 @@ export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked }) {
               <span className="text-sm font-medium text-agro-100">Live Community</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-4">
-              The Kilombo 🌍
+              The Kilombo ðŸŒ
             </h1>
             <p className="text-lg text-agro-200 leading-relaxed max-w-xl">
               A gathering place for African farmers to share knowledge, voice notes, and field updates. 
