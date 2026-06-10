@@ -1,0 +1,3 @@
+# AgroNet Africa — Netlify SPA fallback
+# Every URL → serve index.html so React Router can handle the route client-side
+/*    /index.html    200

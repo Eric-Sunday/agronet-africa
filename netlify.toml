@@ -1,0 +1,46 @@
+# ============================================================
+#  AgroNet Africa — Netlify Deployment Configuration
+#  Platform : Netlify (free tier)
+#  Framework: React 18 + Vite 5 + Tailwind CSS 3
+# ============================================================
+
+# ── Build settings ───────────────────────────────────────────────────────
+[build]
+  command   = "npm run build"   # Vite compiles everything into dist/
+  publish   = "dist"            # The folder Netlify serves to visitors
+  functions = "netlify/functions" # (unused now, reserved for future API routes)
+
+# ── Node / npm versions ───────────────────────────────────────────────────
+[build.environment]
+  NODE_VERSION = "20"           # LTS — stable & supported by all Netlify tiers
+  NPM_VERSION  = "10"           # Matches the lockfile format
+
+# ── SPA Routing — THE critical rule ─────────────────────────────────────
+# React Router uses the browser History API. When a visitor lands directly
+# on /jobs or /profile, Netlify must return index.html (not a 404).
+# The 200 status means "rewrite silently" (not a redirect).
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── Security & performance headers ───────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options       = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy       = "strict-origin-when-cross-origin"
+    Permissions-Policy    = "camera=(), microphone=(), geolocation=()"
+
+# Cache immutable hashed assets (JS/CSS chunks Vite fingerprints)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Do not cache the entry point — always fetch fresh index.html
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
