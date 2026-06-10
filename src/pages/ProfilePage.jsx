@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   User, Mail, MapPin, Calendar, Award, Plus, X, Edit3,
@@ -336,7 +336,7 @@ function DreamToRoleMapper() {
 
         {/* Example chips */}
         <div>
-          <p className="text-xs font-medium text-gray-400 mb-2.5">💡 Try an example:</p>
+          <p className="text-xs font-medium text-gray-400 mb-2.5">ðŸ’¡ Try an example:</p>
           <div className="flex flex-wrap gap-2">
             {exampleDreams.slice(0, 4).map((example, i) => (
               <button
@@ -484,7 +484,7 @@ function DreamToRoleMapper() {
             <div className="absolute inset-0 bg-grid opacity-10" />
             <div className="relative">
               <h3 className="text-xl font-display font-bold text-white mb-2">
-                Ready to start your journey? 🚀
+                Ready to start your journey? ðŸš€
               </h3>
               <p className="text-sm text-white/80 mb-5 max-w-xl mx-auto">
                 Save this roadmap to your profile and begin with Step 1. Track your progress as you earn
@@ -510,7 +510,6 @@ function DreamToRoleMapper() {
     </div>
   );
 }
-
 
 // ===== MAIN PROFILE PAGE =====
 export default function ProfilePage() {
@@ -662,7 +661,7 @@ export default function ProfilePage() {
                       <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
                         <MapPin className="w-4 h-4" />
                         {profile.location}
-                        <span className="text-gray-300 mx-1">•</span>
+                        <span className="text-gray-300 mx-1">â€¢</span>
                         <Mail className="w-4 h-4" />
                         {profile.email}
                       </p>
@@ -727,7 +726,7 @@ export default function ProfilePage() {
       <section className="py-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Left Column — Bio, Skills, Certs, Career Mapper */}
+            {/* Left Column â€” Bio, Skills, Certs, Career Mapper */}
             <div className="lg:col-span-2 space-y-8">
               {/* Bio Section */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -749,7 +748,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Edit form — Name / Location / Email */}
+              {/* Edit form â€” Name / Location / Email */}
               {isEditing && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm animate-fade-in-up space-y-5">
                   <h2 className="text-lg font-display font-bold text-gray-900 mb-2 flex items-center gap-2">
@@ -948,7 +947,7 @@ export default function ProfilePage() {
               <DreamToRoleMapper />
             </div>
 
-            {/* Right Column — Sidebar */}
+            {/* Right Column â€” Sidebar */}
             <div className="space-y-6">
               {/* Member since */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
