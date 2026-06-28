@@ -1,7 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Menu, X, Leaf, ArrowRight, Home, Briefcase, UserCircle, Radio, LogOut, LogIn
+  Menu, X, Leaf, ArrowRight, Home, Briefcase, UserCircle, Radio, LogOut, LogIn,
+  ShieldCheck, Zap
 } from 'lucide-react';
 
 export default function Navbar({ currentUser, onLogout }) {
@@ -27,6 +28,8 @@ export default function Navbar({ currentUser, onLogout }) {
     { label: 'Job Board', to: '/jobs', icon: Briefcase },
     { label: 'The Kilombo', to: '/kilombo', icon: Radio },
     { label: 'Profile', to: '/profile', icon: UserCircle },
+    { label: 'Hire an Expert', to: '/expert', icon: Zap, premium: true },
+    { label: 'My Escrow', to: '/expert/escrow-dashboard', icon: ShieldCheck },
   ];
 
   const isActive = (path) => {
@@ -90,6 +93,11 @@ export default function Navbar({ currentUser, onLogout }) {
               >
                 <link.icon className="w-4 h-4" />
                 {link.label}
+                {link.premium && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-earth-100 text-earth-700 border border-earth-200 rounded-full leading-none">
+                    PRO
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -159,6 +167,11 @@ export default function Navbar({ currentUser, onLogout }) {
               >
                 <link.icon className="w-5 h-5" />
                 {link.label}
+                {link.premium && (
+                  <span className="ml-auto inline-flex items-center px-2 py-0.5 text-[10px] font-bold bg-earth-100 text-earth-700 border border-earth-200 rounded-full">
+                    PRO
+                  </span>
+                )}
               </Link>
             ))}
 
