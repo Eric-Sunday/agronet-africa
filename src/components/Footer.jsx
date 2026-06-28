@@ -4,10 +4,10 @@ import { Leaf } from 'lucide-react';
 export default function Footer() {
   const footerLinks = {
     Platform: [
-      { label: 'Browse Jobs', to: '/jobs' },
-      { label: 'Post a Job', to: '/jobs' },
-      { label: 'AI Career Mapper', to: '/' },
-      { label: 'Micro-Learning', to: '/' },
+      { label: 'Browse Jobs',          to: '/jobs'    },
+      { label: 'Post a Job',            to: '/jobs'    },
+      { label: 'Hire an Expert ✦',      to: '/expert'  },
+      { label: 'My Escrow Contracts',   to: '/expert/escrow-dashboard' },
     ],
     Community: [
       { label: 'Field Evangelists', to: '/' },

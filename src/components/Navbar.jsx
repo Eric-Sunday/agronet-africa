@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Menu, X, Leaf, ArrowRight, Home, Briefcase, UserCircle, Radio, LogOut, LogIn,
-  ShieldCheck, Zap
+  Menu, X, Leaf, ArrowRight, Briefcase, Zap, ShieldCheck,
+  LogOut, LogIn, PlusCircle, UserCircle
 } from 'lucide-react';
 
 export default function Navbar({ currentUser, onLogout }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen]     = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location  = useLocation();
+  const navigate  = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -17,19 +17,22 @@ export default function Navbar({ currentUser, onLogout }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setIsOpen(false);
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const navLinks = [
-    { label: 'Home', to: '/', icon: Home },
-    { label: 'Job Board', to: '/jobs', icon: Briefcase },
-    { label: 'The Kilombo', to: '/kilombo', icon: Radio },
-    { label: 'Profile', to: '/profile', icon: UserCircle },
-    { label: 'Hire an Expert', to: '/expert', icon: Zap, premium: true },
-    { label: 'My Escrow', to: '/expert/escrow-dashboard', icon: ShieldCheck },
+  // ── Center nav links ───────────────────────────────────────────────────────
+  const centerLinks = [
+    { label: 'Find Long-term Jobs',   to: '/jobs',    icon: Briefcase },
+    { label: 'Hire an Expert',        to: '/expert',  icon: Zap,        premium: true },
+    { label: 'Post a Requirement',    to: '/jobs',    icon: PlusCircle  },
+  ];
+
+  // ── Auth / user links (mobile only) ───────────────────────────────────────
+  const mobileExtras = [
+    { label: 'My Escrow Contracts',  to: '/expert/escrow-dashboard', icon: ShieldCheck },
+    { label: 'My Profile',           to: '/profile',                 icon: UserCircle  },
   ];
 
   const isActive = (path) => {
@@ -42,73 +45,66 @@ export default function Navbar({ currentUser, onLogout }) {
     navigate('/');
   };
 
-  // Role label shortener
-  const roleLabel = (role) => {
-    if (!role) return '';
-    return role.replace('_', ' ').replace('Agribusiness ', 'Employer ');
-  };
-
-  // Get initials for avatar
   const initials = currentUser?.name
     ? currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
     : '?';
+
+  const roleLabel = (role) => role ? role.replace('_', ' ') : '';
 
   return (
     <nav
       id="navbar"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
-          ? 'bg-white/90 backdrop-blur-xl shadow-lg shadow-agro-900/5 py-3'
-          : 'bg-white/70 backdrop-blur-lg py-4'
+          ? 'bg-white/95 backdrop-blur-xl shadow-lg shadow-gray-900/5 py-3'
+          : 'bg-white/80 backdrop-blur-lg py-4'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
+        <div className="flex items-center justify-between gap-6">
+
+          {/* ── Logo ── */}
+          <Link to="/" className="flex items-center gap-3 group flex-shrink-0" id="nav-logo">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-agro-500 to-agro-700 rounded-xl flex items-center justify-center shadow-lg shadow-agro-500/30 group-hover:shadow-agro-500/50 transition-shadow duration-300">
+              <div className="w-10 h-10 bg-gradient-to-br from-forest-700 to-agro-600 rounded-xl flex items-center justify-center shadow-lg shadow-agro-500/30 group-hover:shadow-agro-500/50 transition-shadow duration-300">
                 <Leaf className="w-5 h-5 text-white" />
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-earth-400 rounded-full animate-pulse-gentle" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-mint-400 rounded-full animate-pulse-gentle" />
             </div>
-            <div>
-              <span className="text-xl font-display font-bold text-agro-900">AgroNet</span>
+            <div className="hidden sm:block">
+              <span className="text-xl font-display font-bold text-forest-900">AgroNet</span>
               <span className="text-xl font-display font-bold text-agro-500 ml-1">Africa</span>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
+          {/* ── Center Nav Links (Desktop) ── */}
+          <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
+            {centerLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.to}
                 id={`nav-link-${link.label.toLowerCase().replace(/\s/g, '-')}`}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap ${
                   isActive(link.to)
-                    ? 'bg-agro-100 text-agro-800 shadow-sm'
-                    : 'text-gray-600 hover:text-agro-700 hover:bg-agro-50'
+                    ? 'bg-agro-100 text-forest-800 font-semibold'
+                    : 'text-gray-600 hover:text-forest-800 hover:bg-gray-100'
                 }`}
               >
-                <link.icon className="w-4 h-4" />
+                <link.icon className="w-4 h-4 flex-shrink-0" />
                 {link.label}
                 {link.premium && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-earth-100 text-earth-700 border border-earth-200 rounded-full leading-none">
-                    PRO
-                  </span>
+                  <span className="badge-premium flex-shrink-0">✦ New</span>
                 )}
               </Link>
             ))}
           </div>
 
-          {/* Desktop Auth */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* ── Right: Auth Buttons (Desktop) ── */}
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
             {currentUser ? (
-              // â”€â”€ Logged-in state â”€â”€
-              <div className="flex items-center gap-3">
-                <Link to="/profile" className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-agro-50 transition-colors group">
-                  <div className="w-9 h-9 bg-gradient-to-br from-agro-500 to-agro-700 rounded-lg flex items-center justify-center shadow-sm">
+              <div className="flex items-center gap-2">
+                <Link to="/profile" className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors group">
+                  <div className="w-9 h-9 bg-gradient-to-br from-forest-600 to-agro-700 rounded-lg flex items-center justify-center shadow-sm">
                     <span className="text-white text-xs font-bold">{initials}</span>
                   </div>
                   <div className="text-left">
@@ -125,61 +121,79 @@ export default function Navbar({ currentUser, onLogout }) {
                 </button>
               </div>
             ) : (
-              // â”€â”€ Logged-out state â”€â”€
               <>
-                <Link to="/login" className="btn-ghost text-sm" id="nav-login-btn">
-                  <LogIn className="w-4 h-4" /> Log In
+                <Link
+                  to="/login"
+                  className="btn-ghost text-sm !px-5 !py-2.5"
+                  id="nav-signin-btn"
+                >
+                  <LogIn className="w-4 h-4" /> Sign In
                 </Link>
-                <Link to="/register" className="btn-primary text-sm !px-6 !py-2.5" id="nav-signup-btn">
-                  Get Started
-                  <ArrowRight className="w-4 h-4" />
+                <Link
+                  to="/register"
+                  className="btn-glow text-sm !px-6 !py-2.5"
+                  id="nav-register-btn"
+                >
+                  Register <ArrowRight className="w-4 h-4" />
                 </Link>
               </>
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* ── Mobile Menu Toggle ── */}
           <button
             id="mobile-menu-btn"
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-xl text-gray-600 hover:bg-agro-50 transition-colors"
+            className="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* ── Mobile Menu ── */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${
-            isOpen ? 'max-h-[600px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+          className={`lg:hidden overflow-hidden transition-all duration-500 ease-out ${
+            isOpen ? 'max-h-[700px] opacity-100 mt-4' : 'max-h-0 opacity-0'
           }`}
         >
           <div className="glass-card p-4 space-y-1">
-            {navLinks.map((link) => (
+            {/* Center links */}
+            {centerLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.to}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium transition-all duration-200 ${
                   isActive(link.to)
-                    ? 'bg-agro-100 text-agro-800'
-                    : 'text-gray-700 hover:text-agro-700 hover:bg-agro-50'
+                    ? 'bg-agro-100 text-forest-800'
+                    : 'text-gray-700 hover:text-forest-800 hover:bg-gray-100'
                 }`}
               >
                 <link.icon className="w-5 h-5" />
                 {link.label}
-                {link.premium && (
-                  <span className="ml-auto inline-flex items-center px-2 py-0.5 text-[10px] font-bold bg-earth-100 text-earth-700 border border-earth-200 rounded-full">
-                    PRO
-                  </span>
-                )}
+                {link.premium && <span className="ml-auto badge-premium">✦ New</span>}
               </Link>
             ))}
 
-            <div className="pt-3 mt-3 border-t border-gray-100 space-y-2">
+            {/* Extras */}
+            <div className="pt-2 border-t border-gray-100 space-y-1">
+              {mobileExtras.map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-forest-800 hover:bg-gray-100 transition-all duration-200 text-sm font-medium"
+                >
+                  <link.icon className="w-4 h-4" />
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Auth */}
+            <div className="pt-3 border-t border-gray-100 space-y-2">
               {currentUser ? (
                 <>
                   <div className="flex items-center gap-3 px-4 py-3 bg-agro-50 rounded-xl">
-                    <div className="w-9 h-9 bg-gradient-to-br from-agro-500 to-agro-700 rounded-lg flex items-center justify-center">
+                    <div className="w-9 h-9 bg-gradient-to-br from-forest-600 to-agro-700 rounded-lg flex items-center justify-center">
                       <span className="text-white text-xs font-bold">{initials}</span>
                     </div>
                     <div>
@@ -197,10 +211,10 @@ export default function Navbar({ currentUser, onLogout }) {
               ) : (
                 <>
                   <Link to="/login" className="w-full btn-ghost text-sm justify-center flex">
-                    <LogIn className="w-4 h-4" /> Log In
+                    <LogIn className="w-4 h-4" /> Sign In
                   </Link>
-                  <Link to="/register" className="w-full btn-primary text-sm justify-center flex">
-                    Get Started <ArrowRight className="w-4 h-4 ml-2" />
+                  <Link to="/register" className="w-full btn-glow text-sm justify-center flex">
+                    Register <ArrowRight className="w-4 h-4 ml-1" />
                   </Link>
                 </>
               )}
@@ -211,4 +225,3 @@ export default function Navbar({ currentUser, onLogout }) {
     </nav>
   );
 }
-

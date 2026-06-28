@@ -1,0 +1,18 @@
+feat: full landing page redesign + Agrilencer native infusion
+
+- Upgrade typography: Plus Jakarta Sans added as primary display font
+- Extend Tailwind: forest deep-green palette + mint accent palette
+- Add CSS: btn-glow, badge-premium, tab-active/inactive, pillar-card components
+- Refactor Navbar: 3-zone layout (logo / centered nav links / auth CTAs)
+  - Center links: Find Long-term Jobs | Hire an Expert [PRO] | Post a Requirement
+  - Auth CTAs: Sign In (ghost) + Register (forest glow button)
+- Full HomePage.jsx rewrite with 6 premium sections:
+  A. Hero: dark forest theme, new dual CTA (Browse Jobs + Instant Expert Booking)
+  B. Feature Matrix: two-pillar side-by-side (AgroNet Jobs vs Agrilencer Premium)
+  C. Live Marketplace: tabbed Farm Jobs / Field Experts with Book Now toast
+  D. Escrow Trust: 4-step visual flow explaining zero-risk payment model
+  E. Impact Stats: refined with forest/mint tokens and animated counters
+  F. CTA Banner: Register + Hire an Expert CTAs
+- Enrich mockData.js: HOME_JOBS and HOME_EXPERTS preview arrays for homepage
+- Update Footer: add Hire an Expert + Escrow Contracts links to Platform column
+- All existing pages (/jobs, /expert, /escrow-dashboard) remain untouched

@@ -1,502 +1,664 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Leaf, ChevronRight, ArrowRight, Users, Briefcase,
-  MapPin, Star, Shield, Zap, Globe, Heart, Building2,
-  UserSearch, Megaphone, CheckCircle, TrendingUp, Sprout,
-  Sun, ChevronDown, ExternalLink
+  Leaf, ArrowRight, Users, Briefcase, MapPin, Star, ShieldCheck,
+  Zap, Globe, Building2, UserSearch, CheckCircle, TrendingUp,
+  ChevronDown, Sparkles, Clock, Award, Lock, BadgeCheck,
+  Sprout, BarChart3, FileText, Unlock, PlusCircle
 } from 'lucide-react';
-import { ROLE_INFO, USER_ROLES, PLATFORM_STATS } from '../data/mockDatabase';
+import { PLATFORM_STATS } from '../data/mockDatabase';
+import { HOME_JOBS, HOME_EXPERTS } from '../data/mockData';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
-// ===== Intersection Observer Hook =====
+// ─────────────────────────────────────────────────────────────────────────────
+// Intersection Observer Hook
+// ─────────────────────────────────────────────────────────────────────────────
 function useInView(options = {}) {
   const ref = useRef(null);
   const [isInView, setIsInView] = useState(false);
-
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsInView(true);
-        observer.unobserve(entry.target);
-      }
-    }, { threshold: 0.15, ...options });
-
+      if (entry.isIntersecting) { setIsInView(true); observer.unobserve(entry.target); }
+    }, { threshold: 0.12, ...options });
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
-
   return [ref, isInView];
 }
 
-// ===== Animated Counter Component =====
+// ─────────────────────────────────────────────────────────────────────────────
+// Animated Counter
+// ─────────────────────────────────────────────────────────────────────────────
 function AnimatedCounter({ target, suffix = '', duration = 2000 }) {
   const [count, setCount] = useState(0);
-  const [ref, isInView] = useInView();
-
+  const [ref, isInView]   = useInView();
   useEffect(() => {
     if (!isInView) return;
     let start = 0;
-    const increment = target / (duration / 16);
+    const inc = target / (duration / 16);
     const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) {
-        setCount(target);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
+      start += inc;
+      if (start >= target) { setCount(target); clearInterval(timer); }
+      else setCount(Math.floor(start));
     }, 16);
     return () => clearInterval(timer);
   }, [isInView, target, duration]);
-
-  return (
-    <span ref={ref}>
-      {count.toLocaleString()}{suffix}
-    </span>
-  );
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
-// ===== Role Icon Component =====
-function RoleIcon({ role, className = "w-8 h-8" }) {
-  const icons = {
-    Building2: Building2,
-    UserSearch: UserSearch,
-    Megaphone: Megaphone,
-  };
-  const Icon = icons[role] || Leaf;
-  return <Icon className={className} />;
-}
-
-// ===== Floating Decorative Elements =====
-function FloatingElements() {
+// ─────────────────────────────────────────────────────────────────────────────
+// Toast Notification (mini)
+// ─────────────────────────────────────────────────────────────────────────────
+function Toast({ message, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3200);
+    return () => clearTimeout(t);
+  }, []);
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Organic blob shapes */}
-      <div className="absolute -top-32 -right-32 w-96 h-96 bg-agro-200/30 blob-shape animate-float blur-3xl" />
-      <div className="absolute top-1/3 -left-24 w-72 h-72 bg-agro-300/20 blob-shape-2 animate-float-delayed blur-2xl" />
-      <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-earth-200/20 blob-shape animate-float blur-2xl" />
-      
-      {/* Dot pattern overlay */}
-      <div className="absolute inset-0 bg-dots opacity-40" />
+    <div className="fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-5 py-4 bg-forest-800 text-white rounded-2xl shadow-2xl shadow-forest-900/40 animate-fade-in-up">
+      <div className="w-8 h-8 bg-mint-500 rounded-full flex items-center justify-center flex-shrink-0">
+        <CheckCircle className="w-4 h-4 text-forest-900" />
+      </div>
+      <span className="text-sm font-semibold">{message}</span>
     </div>
   );
 }
 
-// ===== Hero Section =====
+// ─────────────────────────────────────────────────────────────────────────────
+// Star Rating renderer
+// ─────────────────────────────────────────────────────────────────────────────
+function Stars({ rating }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <Star key={i} className={`w-3.5 h-3.5 ${i < Math.floor(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}`} />
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// A. HERO SECTION
+// ─────────────────────────────────────────────────────────────────────────────
 function HeroSection() {
   return (
     <section id="home" className="relative min-h-screen flex items-center pt-20 overflow-hidden">
-      <FloatingElements />
+      {/* Background layers */}
+      <div className="absolute inset-0 bg-gradient-to-br from-forest-950 via-forest-900 to-agro-900" />
+      <div className="absolute inset-0 bg-grid opacity-10" />
+      {/* Decorative blobs */}
+      <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-agro-500/10 blob-shape blur-3xl animate-float" />
+      <div className="absolute top-1/2 -left-32 w-80 h-80 bg-mint-500/8 blob-shape-2 blur-3xl animate-float-delayed" />
+      <div className="absolute bottom-0 right-1/3 w-72 h-72 bg-earth-500/10 blob-shape blur-2xl" />
 
-      {/* Hero background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-agro-50 via-white to-earth-50/30" />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 w-full">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left - Text Content */}
+          {/* Left — Copy */}
           <div className="space-y-8">
-            {/* Badge */}
-            <div className="animate-fade-in-down inline-flex items-center gap-2 px-4 py-2 bg-agro-100/80 backdrop-blur-sm border border-agro-200/60 rounded-full">
-              <Sprout className="w-4 h-4 text-agro-600" />
-              <span className="text-sm font-medium text-agro-700">
-                Growing Africa's Agricultural Future
-              </span>
+            {/* Eyebrow badge */}
+            <div className="animate-fade-in-down inline-flex items-center gap-2.5 px-4 py-2 bg-forest-800/60 border border-forest-600/40 rounded-full backdrop-blur-sm">
+              <Sprout className="w-4 h-4 text-mint-400" />
+              <span className="text-sm font-semibold text-mint-300 tracking-wide">Africa's Agricultural Ecosystem</span>
             </div>
 
             {/* Headline */}
-            <div className="animate-fade-in-up space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-bold leading-[1.1] tracking-tight">
-                <span className="text-agro-950">Connect.</span>
+            <div className="animate-fade-in-up space-y-5">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-black leading-[1.08] tracking-tight text-white">
+                The Complete Digital
                 <br />
-                <span className="text-gradient-green">Cultivate.</span>
+                <span className="bg-gradient-to-r from-mint-400 via-agro-400 to-mint-300 bg-clip-text text-transparent">
+                  Infrastructure
+                </span>
                 <br />
-                <span className="text-agro-950">Thrive.</span>
+                for African Agricultural Talent.
               </h1>
-              <p className="text-lg sm:text-xl text-gray-600 max-w-xl leading-relaxed">
-                AgroNet Africa is the continent's premier platform connecting 
-                <span className="font-semibold text-agro-700"> agribusinesses</span>, 
-                <span className="font-semibold text-earth-700"> job seekers</span>, and 
-                <span className="font-semibold text-soil-600"> community evangelists</span> to 
-                build a sustainable agricultural future.
+              <p className="text-lg text-gray-300 max-w-xl leading-relaxed">
+                Whether you need full-time farm workers or immediate on-demand assistance from verified veterinary and agronomy specialists, AgroNet connects your agribusiness to the right expertise{' '}
+                <span className="text-mint-300 font-semibold">in minutes</span>.
               </p>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="animate-fade-in-up stagger-2 flex flex-wrap gap-4">
-              <Link to="/jobs" className="btn-primary text-base" id="hero-explore-btn">
-                Explore Opportunities
-                <ArrowRight className="w-5 h-5" />
+            {/* Dual CTA Block */}
+            <div className="animate-fade-in-up stagger-2 flex flex-col sm:flex-row gap-4">
+              {/* Primary — AgroNet Jobs */}
+              <Link to="/jobs" className="btn-primary text-base !px-7 !py-4 !from-agro-600 !to-agro-500" id="hero-browse-jobs-btn">
+                <Briefcase className="w-5 h-5" />
+                Browse Farm Jobs
               </Link>
-              <a href="#about" className="btn-secondary text-base" id="hero-learn-btn">
-                Learn More
-                <ChevronDown className="w-5 h-5" />
-              </a>
+              {/* Secondary — Agrilencer */}
+              <Link to="/expert" id="hero-expert-btn"
+                className="relative inline-flex items-center gap-2.5 px-7 py-4 bg-transparent border-2 border-mint-400/60 text-mint-300 font-semibold rounded-xl text-base cursor-pointer hover:bg-mint-400/10 hover:border-mint-300 transition-all duration-200 group overflow-hidden"
+              >
+                {/* Glow ring */}
+                <span className="absolute inset-0 rounded-xl bg-mint-400/5 group-hover:bg-mint-400/10 transition-colors" />
+                <Zap className="w-5 h-5 flex-shrink-0 text-mint-400" />
+                <span className="relative">Instant Field Expert Booking</span>
+                <span className="badge-premium relative flex-shrink-0">✦ New</span>
+              </Link>
             </div>
 
-            {/* Social proof */}
-            <div className="animate-fade-in stagger-4 flex items-center gap-6 pt-4">
+            {/* Social proof row */}
+            <div className="animate-fade-in stagger-4 flex items-center gap-6 pt-2">
               <div className="flex -space-x-3">
-                {['bg-agro-400', 'bg-earth-400', 'bg-soil-400', 'bg-agro-600'].map((bg, i) => (
-                  <div
-                    key={i}
-                    className={`w-10 h-10 ${bg} rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-md`}
-                  >
-                    {['AO', 'KA', 'AW', 'FD'][i]}
+                {['bg-agro-500', 'bg-earth-400', 'bg-mint-600', 'bg-sky-500'].map((bg, i) => (
+                  <div key={i} className={`w-9 h-9 ${bg} rounded-full border-2 border-forest-800 flex items-center justify-center text-white text-xs font-bold shadow-md`}>
+                    {['AO', 'NE', 'KA', 'FD'][i]}
                   </div>
                 ))}
-                <div className="w-10 h-10 bg-agro-100 rounded-full border-2 border-white flex items-center justify-center text-agro-700 text-xs font-bold shadow-md">
-                  +12K
-                </div>
+                <div className="w-9 h-9 bg-forest-700 rounded-full border-2 border-forest-800 flex items-center justify-center text-mint-300 text-xs font-bold">+12K</div>
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-earth-400 text-earth-400" />
-                  ))}
+                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />)}
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Trusted by 12,000+ users across Africa
-                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Trusted by 12,000+ users across Africa</p>
               </div>
             </div>
           </div>
 
-          {/* Right - Visual */}
+          {/* Right — Dashboard Preview Card */}
           <div className="relative animate-fade-in stagger-3">
-            {/* Main illustration card */}
-            <div className="relative z-10">
-              <div className="glass-card p-8 lg:p-10 space-y-6">
-                {/* Map silhouette with dots */}
-                <div className="relative h-64 bg-gradient-to-br from-agro-100 to-agro-50 rounded-2xl overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-grid opacity-50" />
-                  <div className="relative text-center space-y-4">
-                    <Globe className="w-20 h-20 text-agro-400 mx-auto animate-pulse-gentle" />
-                    <div>
-                      <p className="text-3xl font-display font-bold text-agro-800">
-                        <AnimatedCounter target={18} />
-                      </p>
-                      <p className="text-sm text-agro-600 font-medium">
-                        African Countries
-                      </p>
-                    </div>
-                  </div>
-                  {/* Animated connection dots */}
-                  {[
-                    'top-8 left-12', 'top-16 right-16', 'bottom-12 left-1/4',
-                    'bottom-20 right-1/3', 'top-1/3 left-8'
-                  ].map((pos, i) => (
-                    <div
-                      key={i}
-                      className={`absolute ${pos} w-3 h-3 bg-agro-500 rounded-full shadow-lg shadow-agro-500/50`}
-                      style={{ animation: `pulseGentle 3s ease-in-out ${i * 0.5}s infinite` }}
-                    />
-                  ))}
-                </div>
-
-                {/* Quick stats row */}
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { value: PLATFORM_STATS.activeJobs, label: 'Active Jobs', suffix: '+' },
-                    { value: PLATFORM_STATS.totalUsers, label: 'Users', suffix: '+' },
-                    { value: PLATFORM_STATS.successfulPlacements, label: 'Placements', suffix: '+' },
-                  ].map((stat, i) => (
-                    <div key={i} className="text-center p-3 bg-agro-50/60 rounded-xl">
-                      <p className="text-xl font-display font-bold text-agro-800">
-                        <AnimatedCounter target={stat.value} suffix={stat.suffix} />
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
+            <div className="relative z-10 glass-card-dark p-6 space-y-5 border border-forest-700/40">
+              {/* Card header */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-300">Platform Overview</p>
+                <span className="flex items-center gap-1.5 text-xs text-mint-400 font-medium">
+                  <span className="w-2 h-2 bg-mint-400 rounded-full animate-pulse" />
+                  Live
+                </span>
               </div>
-            </div>
 
-            {/* Decorative background elements */}
-            <div className="absolute -top-6 -right-6 w-full h-full bg-gradient-to-br from-agro-200 to-agro-300 rounded-2xl -z-10 rotate-3" />
-            <div className="absolute -bottom-4 -left-4 w-full h-full bg-gradient-to-br from-earth-100 to-earth-200 rounded-2xl -z-20 -rotate-2" />
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <ChevronDown className="w-6 h-6 text-agro-400" />
-      </div>
-    </section>
-  );
-}
-
-// ===== About Section =====
-function AboutSection() {
-  const [ref, isInView] = useInView();
-
-  const features = [
-    {
-      icon: Zap,
-      title: 'AI-Powered Matching',
-      description: 'Our intelligent system matches job seekers with the perfect agricultural roles based on skills, location, and career goals.',
-    },
-    {
-      icon: Shield,
-      title: 'Verified Profiles',
-      description: 'Every employer and job seeker is verified to ensure trust and safety across the platform.',
-    },
-    {
-      icon: Globe,
-      title: 'Pan-African Reach',
-      description: 'Operating across 18 countries with local community evangelists ensuring grassroots accessibility.',
-    },
-    {
-      icon: Heart,
-      title: 'Sustainable Focus',
-      description: 'Dedicated to promoting sustainable farming practices and green agricultural innovation across the continent.',
-    },
-  ];
-
-  return (
-    <section id="about" className="relative py-24 lg:py-32 bg-white overflow-hidden">
-      <div className="absolute inset-0 bg-grid opacity-30" />
-
-      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-agro-100 rounded-full mb-6">
-            <Sun className="w-4 h-4 text-agro-600" />
-            <span className="text-sm font-medium text-agro-700">Why AgroNet Africa</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-agro-950 mb-6">
-            Empowering Africa's{' '}
-            <span className="text-gradient-green">Agricultural Revolution</span>
-          </h2>
-          <p className="text-lg text-gray-600 leading-relaxed">
-            AgroNet Africa bridges the gap between agricultural talent and opportunity. 
-            We're building an ecosystem where agribusinesses thrive, job seekers find 
-            meaningful careers, and community evangelists drive grassroots adoption of 
-            sustainable farming practices.
-          </p>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className={`group relative p-6 rounded-2xl border border-gray-100 bg-white hover:bg-agro-50/50 hover:border-agro-200 transition-all duration-500 hover:shadow-xl hover:shadow-agro-100/50 hover:-translate-y-1 ${
-                isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-              }`}
-              style={{ transitionDelay: `${index * 150}ms` }}
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-agro-100 to-agro-200 rounded-xl flex items-center justify-center mb-4 group-hover:from-agro-200 group-hover:to-agro-300 transition-colors duration-300">
-                <feature.icon className="w-6 h-6 text-agro-700" />
-              </div>
-              <h3 className="text-lg font-display font-semibold text-gray-900 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ===== Roles Section =====
-function RolesSection() {
-  const [ref, isInView] = useInView();
-  const roles = Object.values(USER_ROLES);
-
-  const colorMap = {
-    agro: {
-      gradient: 'from-agro-500 to-agro-700',
-      bg: 'bg-agro-50',
-      border: 'border-agro-200',
-      hoverBorder: 'hover:border-agro-400',
-      iconBg: 'bg-agro-100',
-      text: 'text-agro-700',
-      badge: 'bg-agro-100 text-agro-700',
-      check: 'text-agro-500',
-      button: 'bg-agro-600 hover:bg-agro-700',
-    },
-    earth: {
-      gradient: 'from-earth-500 to-earth-700',
-      bg: 'bg-earth-50',
-      border: 'border-earth-200',
-      hoverBorder: 'hover:border-earth-400',
-      iconBg: 'bg-earth-100',
-      text: 'text-earth-700',
-      badge: 'bg-earth-100 text-earth-700',
-      check: 'text-earth-500',
-      button: 'bg-earth-600 hover:bg-earth-700',
-    },
-    soil: {
-      gradient: 'from-soil-500 to-soil-700',
-      bg: 'bg-soil-50',
-      border: 'border-soil-200',
-      hoverBorder: 'hover:border-soil-400',
-      iconBg: 'bg-soil-100',
-      text: 'text-soil-700',
-      badge: 'bg-soil-100 text-soil-700',
-      check: 'text-soil-500',
-      button: 'bg-soil-600 hover:bg-soil-700',
-    },
-  };
-
-  // Map roles to routes
-  const roleRoutes = {
-    employer: '/jobs',
-    seeker: '/profile',
-    evangelist: '/',
-  };
-
-  return (
-    <section id="roles" className="relative py-24 lg:py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-agro-50/50 via-white to-agro-50/30" />
-      <div className="absolute inset-0 bg-dots opacity-20" />
-
-      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-agro-100 rounded-full mb-6">
-            <Users className="w-4 h-4 text-agro-600" />
-            <span className="text-sm font-medium text-agro-700">Choose Your Path</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-agro-950 mb-6">
-            Three Ways to{' '}
-            <span className="text-gradient-green">Make an Impact</span>
-          </h2>
-          <p className="text-lg text-gray-600 leading-relaxed">
-            Whether you're hiring, job hunting, or championing change in your community â€” 
-            AgroNet Africa has a role designed for you.
-          </p>
-        </div>
-
-        {/* Role Cards */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {roles.map((roleKey, index) => {
-            const role = ROLE_INFO[roleKey];
-            const colors = colorMap[role.color];
-
-            return (
-              <div
-                key={role.id}
-                id={`role-card-${role.id}`}
-                className={`group relative rounded-2xl border-2 ${colors.border} ${colors.hoverBorder} bg-white overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
-                  isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-                }`}
-                style={{ transitionDelay: `${index * 200}ms` }}
-              >
-                {/* Card Header */}
-                <div className={`relative p-6 pb-8 bg-gradient-to-br ${colors.gradient} text-white overflow-hidden`}>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-
-                  <div className="relative">
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
-                      <RoleIcon role={role.icon} className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="text-xl font-display font-bold mb-1">
-                      {role.title}
-                    </h3>
-                    <p className="text-sm text-white/80">
-                      {role.subtitle}
+              {/* Stats grid */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: PLATFORM_STATS.activeJobs, label: 'Active Jobs', suffix: '+', color: 'text-agro-400' },
+                  { value: PLATFORM_STATS.totalUsers, label: 'Users', suffix: '+', color: 'text-mint-400' },
+                  { value: PLATFORM_STATS.successfulPlacements, label: 'Placements', suffix: '+', color: 'text-sky-400' },
+                ].map((s, i) => (
+                  <div key={i} className="text-center p-3 bg-forest-800/40 rounded-xl border border-forest-700/30">
+                    <p className={`text-xl font-display font-bold ${s.color}`}>
+                      <AnimatedCounter target={s.value} suffix={s.suffix} />
                     </p>
+                    <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
                   </div>
+                ))}
+              </div>
+
+              {/* Available expert mini-card */}
+              <div className="p-4 bg-forest-800/50 rounded-xl border border-mint-500/20">
+                <div className="flex items-center gap-1.5 mb-3">
+                  <Zap className="w-3.5 h-3.5 text-mint-400" />
+                  <span className="text-xs font-semibold text-mint-300 uppercase tracking-wide">Expert Available Now</span>
                 </div>
-
-                {/* Card Body */}
-                <div className="p-6 space-y-5">
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {role.description}
-                  </p>
-
-                  {/* Benefits list */}
-                  <ul className="space-y-3">
-                    {role.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <CheckCircle className={`w-5 h-5 ${colors.check} flex-shrink-0 mt-0.5`} />
-                        <span className="text-sm text-gray-700">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* CTA Button */}
-                  <Link
-                    to={roleRoutes[role.id]}
-                    id={`role-btn-${role.id}`}
-                    className={`w-full py-3 px-6 ${colors.button} text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl active:scale-[0.98]`}
-                  >
-                    Get Started as {role.title.split(' ').pop()}
-                    <ChevronRight className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 bg-gradient-to-br from-agro-600 to-agro-800 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm font-bold">CA</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">Dr. Chukwuemeka Alabi</p>
+                    <p className="text-xs text-agro-400">Soil Agronomist · Ibadan</p>
+                  </div>
+                  <Link to="/expert" className="flex-shrink-0 text-xs font-bold px-3 py-1.5 bg-mint-500 text-forest-900 rounded-lg hover:bg-mint-400 transition-colors">
+                    Book
                   </Link>
                 </div>
               </div>
-            );
-          })}
+
+              {/* Recent job mini-item */}
+              <div className="flex items-center gap-3 p-3 bg-agro-900/30 rounded-xl border border-agro-700/20">
+                <div className="w-9 h-9 bg-agro-700/60 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Briefcase className="w-4 h-4 text-agro-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">Farm Manager — Ibadan</p>
+                  <p className="text-xs text-gray-500">₦350K–₦500K/mo · 2 days ago</p>
+                </div>
+                <span className="flex-shrink-0 text-xs px-2 py-0.5 bg-agro-700/60 text-agro-300 rounded-full font-medium">Urgent</span>
+              </div>
+            </div>
+
+            {/* Decorative stack */}
+            <div className="absolute -top-4 -right-4 w-full h-full bg-gradient-to-br from-forest-700/30 to-agro-800/20 rounded-2xl -z-10 rotate-2 border border-forest-600/20" />
+            <div className="absolute -bottom-4 -left-4 w-full h-full bg-gradient-to-br from-agro-900/30 to-forest-900/20 rounded-2xl -z-20 -rotate-1 border border-agro-800/20" />
+          </div>
+        </div>
+
+        {/* Scroll cue */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
+          <ChevronDown className="w-6 h-6 text-gray-500" />
         </div>
       </div>
     </section>
   );
 }
 
-// ===== Impact Stats Section =====
-function ImpactSection() {
+// ─────────────────────────────────────────────────────────────────────────────
+// B. FEATURE MATRIX — Two-Pillar Side-by-Side
+// ─────────────────────────────────────────────────────────────────────────────
+function FeatureMatrixSection() {
   const [ref, isInView] = useInView();
 
-  const stats = [
-    { value: PLATFORM_STATS.totalUsers, label: 'Active Users', suffix: '+', icon: Users },
-    { value: PLATFORM_STATS.activeJobs, label: 'Job Listings', suffix: '+', icon: Briefcase },
-    { value: PLATFORM_STATS.countriesCovered, label: 'Countries', suffix: '', icon: MapPin },
-    { value: PLATFORM_STATS.communitiesReached, label: 'Communities', suffix: '+', icon: Globe },
-    { value: PLATFORM_STATS.successfulPlacements, label: 'Placements', suffix: '+', icon: TrendingUp },
-    { value: PLATFORM_STATS.fieldEvangelists, label: 'Evangelists', suffix: '+', icon: Megaphone },
+  const agroFeatures = [
+    { icon: Briefcase,  text: 'Streamlined long-term hiring for commercial farms' },
+    { icon: BadgeCheck, text: 'Verified farm managers, supervisors, and operators' },
+    { icon: BarChart3,  text: 'AI-powered candidate matching with auto-filtering' },
+    { icon: Globe,      text: 'Pan-African reach across 18+ countries' },
+  ];
+
+  const agrilencerFeatures = [
+    { icon: Zap,        text: 'Instant geo-proximate access to certified consultants' },
+    { icon: ShieldCheck,text: 'Secure project escrow — pay only on delivery' },
+    { icon: Award,      text: 'Vetted Agronomists, Pathologists, and Veterinarians' },
+    { icon: Clock,      text: 'Solve farm crises within hours, not weeks' },
   ];
 
   return (
-    <section id="impact" className="relative py-24 lg:py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-agro-900 via-agro-950 to-agro-900" />
-      <div className="absolute inset-0 bg-dots opacity-10" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-agro-500/10 blob-shape blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-earth-500/10 blob-shape-2 blur-3xl" />
+    <section id="features" className="relative py-24 lg:py-32 bg-white overflow-hidden">
+      <div className="absolute inset-0 bg-grid opacity-20" />
 
       <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-agro-800/60 border border-agro-700/40 rounded-full mb-6">
-            <TrendingUp className="w-4 h-4 text-agro-400" />
-            <span className="text-sm font-medium text-agro-300">Our Impact</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-forest-50 border border-forest-200 rounded-full mb-6">
+            <Sparkles className="w-4 h-4 text-forest-700" />
+            <span className="text-sm font-semibold text-forest-700">One Unified Ecosystem</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
-            Numbers That{' '}
-            <span className="text-gradient-earth">Tell Our Story</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-gray-900 mb-5">
+            Two Powerful Pillars,{' '}
+            <span className="bg-gradient-to-r from-forest-700 to-agro-600 bg-clip-text text-transparent">
+              One Platform
+            </span>
           </h2>
-          <p className="text-lg text-agro-200/80 leading-relaxed">
-            From Lagos to Nairobi, Dakar to Accra â€” AgroNet Africa is 
-            transforming how the continent approaches agricultural employment.
+          <p className="text-lg text-gray-600 leading-relaxed">
+            AgroNet Africa gives agribusinesses everything they need — from long-term workforce recruitment to immediate on-demand specialist consultation.
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 lg:gap-8">
-          {stats.map((stat, index) => (
+        {/* Pillar Grid */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Pillar 1 — AgroNet Jobs */}
+          <div className={`pillar-card border-agro-200 bg-gradient-to-br from-agro-50 to-white hover:border-agro-400 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+            style={{ transitionDelay: '100ms' }}>
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-agro-600 to-agro-800 rounded-2xl flex items-center justify-center shadow-lg shadow-agro-500/20 flex-shrink-0">
+                <Building2 className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-agro-100 text-agro-700 text-xs font-bold rounded-full mb-2 border border-agro-200">
+                  <Briefcase className="w-3 h-3" /> Pillar 1
+                </div>
+                <h3 className="text-xl font-display font-black text-gray-900">AgroNet Jobs Portal</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Long-term agricultural employment</p>
+              </div>
+            </div>
+            <p className="text-gray-600 leading-relaxed mb-6 text-sm">
+              Streamlining long-term hiring for commercial farms. Access verified farm managers, supervisors, operators, and general labor with automated filtering and AI-powered matching.
+            </p>
+            <ul className="space-y-3 mb-8">
+              {agroFeatures.map((f, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <div className="w-7 h-7 bg-agro-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <f.icon className="w-3.5 h-3.5 text-agro-700" />
+                  </div>
+                  <span className="text-sm text-gray-700 leading-relaxed">{f.text}</span>
+                </li>
+              ))}
+            </ul>
+            <Link to="/jobs" className="btn-primary !px-6 !py-3 text-sm w-full justify-center" id="feature-browse-jobs">
+              Browse Open Roles <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Pillar 2 — Agrilencer Premium */}
+          <div className={`pillar-card border-forest-300 bg-gradient-to-br from-forest-950 to-forest-900 hover:border-forest-400 hover:shadow-forest-900/30 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
+            style={{ transitionDelay: '250ms' }}>
+            {/* Premium top bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-mint-400 via-agro-400 to-mint-500 rounded-t-2xl" />
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-mint-500 to-forest-600 rounded-2xl flex items-center justify-center shadow-lg shadow-mint-500/20 flex-shrink-0">
+                <Zap className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="badge-premium">✦ Premium Add-on</span>
+                </div>
+                <h3 className="text-xl font-display font-black text-white">Agrilencer On-Demand Experts</h3>
+                <p className="text-sm text-gray-400 mt-0.5">Instant specialist consultations</p>
+              </div>
+            </div>
+            <p className="text-gray-300 leading-relaxed mb-6 text-sm">
+              Instant, geo-proximate access to certified agricultural consultants. Solve sudden farm crises — crop diseases, livestock epidemics, soil degradation — through a secure, built-in project escrow framework.
+            </p>
+            <ul className="space-y-3 mb-8">
+              {agrilencerFeatures.map((f, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <div className="w-7 h-7 bg-forest-800/60 border border-forest-700/40 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <f.icon className="w-3.5 h-3.5 text-mint-400" />
+                  </div>
+                  <span className="text-sm text-gray-300 leading-relaxed">{f.text}</span>
+                </li>
+              ))}
+            </ul>
+            <Link to="/expert" className="btn-glow !px-6 !py-3 text-sm w-full justify-center" id="feature-hire-expert">
+              Hire an Expert Now <Zap className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// C. LIVE MARKETPLACE PREVIEW — Tabbed
+// ─────────────────────────────────────────────────────────────────────────────
+function LiveMarketplaceSection() {
+  const [ref, isInView]   = useInView();
+  const [activeTab, setActiveTab] = useState('jobs');
+  const [toast, setToast] = useState(null);
+
+  const handleBookNow = (expert) => {
+    setToast(`Escrow initialized successfully for ${expert.name.split(' ').slice(0, 2).join(' ')}!`);
+  };
+
+  return (
+    <section id="marketplace" className="relative py-24 lg:py-32 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-agro-50/60 via-white to-gray-50/40" />
+      <div className="absolute inset-0 bg-dots opacity-20" />
+
+      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className={`text-center max-w-3xl mx-auto mb-12 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-agro-100 border border-agro-200 rounded-full mb-6">
+            <BarChart3 className="w-4 h-4 text-agro-700" />
+            <span className="text-sm font-semibold text-agro-700">Live Marketplace Preview</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-gray-900 mb-5">
+            Explore What's{' '}
+            <span className="bg-gradient-to-r from-forest-700 to-agro-600 bg-clip-text text-transparent">
+              Available Right Now
+            </span>
+          </h2>
+          <p className="text-gray-600 text-lg leading-relaxed">
+            Toggle between long-term employment openings and on-demand specialist consultants — all on one unified platform.
+          </p>
+        </div>
+
+        {/* Tab Toggle */}
+        <div className={`flex justify-center mb-10 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '150ms' }}>
+          <div className="inline-flex items-center gap-1 p-1.5 bg-gray-100 rounded-2xl">
+            <button
+              id="tab-jobs"
+              onClick={() => setActiveTab('jobs')}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm rounded-xl transition-all duration-200 cursor-pointer ${activeTab === 'jobs' ? 'tab-active' : 'tab-inactive'}`}
+            >
+              <Briefcase className="w-4 h-4" />
+              Farm Jobs
+            </button>
+            <button
+              id="tab-experts"
+              onClick={() => setActiveTab('experts')}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm rounded-xl transition-all duration-200 cursor-pointer ${activeTab === 'experts' ? 'tab-active' : 'tab-inactive'}`}
+            >
+              <Zap className="w-4 h-4" />
+              Field Experts
+              <span className="badge-premium">✦</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        <div className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '250ms' }}>
+          {activeTab === 'jobs' ? (
+            <div className="grid sm:grid-cols-2 gap-5">
+              {HOME_JOBS.map((job) => (
+                <div key={job.id} className="glass-card p-5 card-hover group flex flex-col gap-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 bg-gradient-to-br from-agro-600 to-forest-700 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+                        <Building2 className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-display font-bold text-gray-900 text-sm leading-tight">{job.title}</h4>
+                        <p className="text-xs text-gray-500 mt-0.5">{job.company}</p>
+                      </div>
+                    </div>
+                    {job.urgent && (
+                      <span className="flex-shrink-0 text-xs font-bold px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full">Urgent</span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="flex items-center gap-1 text-gray-500"><MapPin className="w-3 h-3" />{job.location}</span>
+                    <span className={`px-2 py-0.5 rounded-full font-medium ${job.type === 'Full-time' ? 'bg-agro-100 text-agro-700' : 'bg-sky-100 text-sky-700'}`}>{job.type}</span>
+                    <span className="text-gray-400">{job.postedAgo}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {job.tags.map(t => <span key={t} className="badge-green text-xs">{t}</span>)}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <span className="font-display font-bold text-forest-700 text-sm">{job.salary}</span>
+                    <Link to="/jobs" id={`view-role-${job.id}`} className="text-xs font-semibold text-agro-700 hover:text-forest-700 flex items-center gap-1 transition-colors">
+                      View Role <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-5">
+              {HOME_EXPERTS.map((exp) => (
+                <div key={exp.id} className="glass-card p-5 card-hover group flex flex-col gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className={`w-14 h-14 bg-gradient-to-br ${exp.avatarColor} rounded-xl flex items-center justify-center shadow-md flex-shrink-0`}>
+                      <span className="text-white font-bold font-display text-lg">{exp.initials}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="font-display font-bold text-gray-900 text-sm leading-tight">{exp.name}</h4>
+                          <p className="text-agro-700 font-semibold text-xs mt-0.5">{exp.specialty}</p>
+                        </div>
+                        <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${exp.availability === 'Available' ? 'bg-mint-100 text-mint-700' : 'bg-amber-50 text-amber-700'}`}>
+                          {exp.availability}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />{exp.location}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Stars rating={exp.rating} />
+                      <span className="text-xs font-bold text-gray-700">{exp.rating}</span>
+                      <span className="text-xs text-gray-400">({exp.reviewCount})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {exp.isVerified && <ShieldCheck className="w-4 h-4 text-agro-600" />}
+                      {exp.isPremium && <Zap className="w-4 h-4 text-earth-500" />}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div>
+                      <p className="text-xs text-gray-500">From</p>
+                      <p className="font-display font-bold text-forest-700 text-sm">₦{exp.hourlyRate.toLocaleString('en-NG')}<span className="text-xs font-normal text-gray-400">/hr</span></p>
+                    </div>
+                    <button
+                      id={`book-now-${exp.id}`}
+                      onClick={() => handleBookNow(exp)}
+                      className="btn-glow !px-4 !py-2 text-xs"
+                    >
+                      <Zap className="w-3.5 h-3.5" /> Book Now
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* View All CTA */}
+        <div className="text-center mt-10">
+          <Link
+            to={activeTab === 'jobs' ? '/jobs' : '/expert'}
+            className="btn-secondary text-sm !px-8"
+            id="marketplace-view-all"
+          >
+            View All {activeTab === 'jobs' ? 'Job Listings' : 'Field Experts'} <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// D. ESCROW TRUST SECTION
+// ─────────────────────────────────────────────────────────────────────────────
+function EscrowTrustSection() {
+  const [ref, isInView] = useInView();
+
+  const steps = [
+    { icon: UserSearch,  step: '01', title: 'Book an Expert',         desc: 'Browse verified specialists, choose a package, and describe your farm challenge.' },
+    { icon: Lock,        step: '02', title: 'Funds Held in Escrow',   desc: 'Your payment is securely held by AgroNet. The expert is notified and accepts the contract.' },
+    { icon: FileText,    step: '03', title: 'Milestone Delivered',    desc: 'The expert completes the site visit, report, or consultation as scoped.' },
+    { icon: Unlock,      step: '04', title: 'Release & Rate',         desc: 'You confirm delivery and release the funds. Rate your experience to help the community.' },
+  ];
+
+  return (
+    <section id="escrow" className="relative py-24 lg:py-32 overflow-hidden bg-white">
+      <div className="absolute inset-0 bg-gradient-to-br from-sky-50/60 via-white to-forest-50/40" />
+      <div className="absolute inset-0 bg-dots opacity-15" />
+
+      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-sky-50 border border-sky-200 rounded-full mb-6">
+            <ShieldCheck className="w-4 h-4 text-sky-700" />
+            <span className="text-sm font-semibold text-sky-700">Zero-Risk Payments</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-gray-900 mb-5">
+            Hire with Absolute Confidence{' '}
+            <span className="bg-gradient-to-r from-sky-600 to-agro-600 bg-clip-text text-transparent">
+              via AgroNet Escrow
+            </span>
+          </h2>
+          <p className="text-lg text-gray-600 leading-relaxed">
+            When booking an on-demand Agrilencer specialist, your funds are safely held by AgroNet. Payment is only released to the consultant once you certify that the milestone, site inspection, or clinical report has been successfully delivered.
+          </p>
+        </div>
+
+        {/* 4-Step Flow */}
+        <div className="relative">
+          {/* Connector line (desktop) */}
+          <div className="hidden lg:block absolute top-10 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-sky-200 via-agro-300 to-mint-400" />
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {steps.map((step, i) => (
+              <div
+                key={i}
+                className={`relative flex flex-col items-center text-center transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+                style={{ transitionDelay: `${i * 150}ms` }}
+              >
+                {/* Icon */}
+                <div className="relative mb-5">
+                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg ${
+                    i === 0 ? 'bg-gradient-to-br from-agro-100 to-agro-200' :
+                    i === 1 ? 'bg-gradient-to-br from-sky-100 to-sky-200' :
+                    i === 2 ? 'bg-gradient-to-br from-amber-50 to-amber-100' :
+                    'bg-gradient-to-br from-mint-100 to-mint-200'
+                  }`}>
+                    <step.icon className={`w-9 h-9 ${
+                      i === 0 ? 'text-agro-700' : i === 1 ? 'text-sky-700' : i === 2 ? 'text-amber-700' : 'text-mint-700'
+                    }`} />
+                  </div>
+                  <span className="absolute -top-2 -right-2 w-7 h-7 bg-forest-800 text-mint-300 rounded-full flex items-center justify-center text-xs font-black">
+                    {step.step}
+                  </span>
+                </div>
+                <h4 className="font-display font-black text-gray-900 text-sm mb-2">{step.title}</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className={`mt-14 text-center transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '600ms' }}>
+          <Link to="/expert" className="btn-glow text-base !px-10 !py-4" id="escrow-hire-btn">
+            <ShieldCheck className="w-5 h-5" />
+            Book a Specialist — Zero Risk
+          </Link>
+          <p className="text-xs text-gray-400 mt-3">Funds held in escrow · Released only on your confirmation</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E. IMPACT STATS SECTION (refined)
+// ─────────────────────────────────────────────────────────────────────────────
+function ImpactSection() {
+  const [ref, isInView] = useInView();
+
+  const stats = [
+    { value: PLATFORM_STATS.totalUsers,           label: 'Active Users',      suffix: '+', icon: Users },
+    { value: PLATFORM_STATS.activeJobs,           label: 'Job Listings',      suffix: '+', icon: Briefcase },
+    { value: PLATFORM_STATS.countriesCovered,     label: 'Countries',         suffix: '',  icon: MapPin },
+    { value: PLATFORM_STATS.communitiesReached,   label: 'Communities',       suffix: '+', icon: Globe },
+    { value: PLATFORM_STATS.successfulPlacements, label: 'Placements',        suffix: '+', icon: TrendingUp },
+    { value: PLATFORM_STATS.fieldEvangelists,     label: 'Field Evangelists', suffix: '+', icon: Sparkles },
+  ];
+
+  return (
+    <section id="impact" className="relative py-24 lg:py-32 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-forest-950 via-forest-900 to-agro-950" />
+      <div className="absolute inset-0 bg-dots opacity-10" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-mint-500/8 blob-shape blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-earth-500/8 blob-shape-2 blur-3xl" />
+
+      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-forest-800/60 border border-forest-700/40 rounded-full mb-6">
+            <TrendingUp className="w-4 h-4 text-mint-400" />
+            <span className="text-sm font-semibold text-mint-300">Our Impact Across Africa</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white mb-5">
+            Numbers That{' '}
+            <span className="bg-gradient-to-r from-mint-400 to-agro-400 bg-clip-text text-transparent">
+              Tell Our Story
+            </span>
+          </h2>
+          <p className="text-lg text-gray-300/80 leading-relaxed">
+            From Lagos to Nairobi, Dakar to Accra — AgroNet Africa is transforming how the continent approaches agricultural employment and expert consultation.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-5 lg:gap-6">
+          {stats.map((stat, i) => (
             <div
-              key={index}
-              className={`group relative p-6 lg:p-8 glass-card-dark text-center hover:bg-agro-800/40 transition-all duration-500 hover:-translate-y-1 ${
+              key={i}
+              className={`group relative p-6 lg:p-8 glass-card-dark text-center hover:bg-forest-800/40 transition-all duration-500 hover:-translate-y-1 cursor-default ${
                 isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
-              style={{ transitionDelay: `${index * 100}ms` }}
+              style={{ transitionDelay: `${i * 100}ms` }}
             >
-              <stat.icon className="w-8 h-8 text-agro-400 mx-auto mb-4 group-hover:text-agro-300 transition-colors" />
-              <p className="text-3xl lg:text-4xl font-display font-bold text-white mb-2">
+              <stat.icon className="w-8 h-8 text-mint-400/70 mx-auto mb-4 group-hover:text-mint-400 transition-colors" />
+              <p className="text-3xl lg:text-4xl font-display font-black text-white mb-2">
                 <AnimatedCounter target={stat.value} suffix={stat.suffix} duration={2500} />
               </p>
-              <p className="text-sm text-agro-300 font-medium">{stat.label}</p>
+              <p className="text-sm text-gray-400 font-medium">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -505,50 +667,46 @@ function ImpactSection() {
   );
 }
 
-// ===== Community CTA Section =====
-function CommunitySection() {
+// ─────────────────────────────────────────────────────────────────────────────
+// F. FINAL CTA SECTION
+// ─────────────────────────────────────────────────────────────────────────────
+function CTASection() {
   const [ref, isInView] = useInView();
 
   return (
-    <section id="community" className="relative py-24 lg:py-32 overflow-hidden bg-white">
-      <div className="absolute inset-0 bg-dots opacity-30" />
+    <section id="cta" className="relative py-24 lg:py-32 overflow-hidden bg-white">
+      <div className="absolute inset-0 bg-dots opacity-25" />
 
       <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`relative rounded-3xl overflow-hidden transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-agro-600 via-agro-500 to-agro-600 animate-gradient-shift" style={{ backgroundSize: '200% 200%' }} />
+          <div className="absolute inset-0 bg-gradient-to-r from-forest-900 via-forest-800 to-agro-900" />
           <div className="absolute inset-0 bg-grid opacity-10" />
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4" />
+          {/* Decorative blobs */}
+          <div className="absolute top-0 right-0 w-72 h-72 bg-mint-400/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-agro-500/10 rounded-full translate-y-1/2 -translate-x-1/4 blur-2xl" />
 
           <div className="relative px-8 py-16 md:px-16 md:py-20 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-6">
-              <Leaf className="w-4 h-4 text-white" />
-              <span className="text-sm font-medium text-white">Join the Movement</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full mb-6">
+              <Leaf className="w-4 h-4 text-mint-300" />
+              <span className="text-sm font-semibold text-mint-200">Join the Movement</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-6 max-w-3xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white mb-6 max-w-3xl mx-auto">
               Ready to Transform Agriculture in Africa?
             </h2>
-            <p className="text-lg text-white/85 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Whether you're an employer seeking talent, a professional chasing opportunities, 
-              or a champion of agricultural innovation â€” your journey starts here.
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+              Whether you're an employer seeking talent, a professional chasing opportunities, or a champion of agricultural innovation — your journey starts here.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link
-                to="/profile"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-agro-700 font-bold rounded-xl shadow-xl shadow-agro-900/20 hover:shadow-2xl hover:bg-agro-50 active:scale-[0.98] transition-all duration-300 text-base"
-                id="cta-create-account-btn"
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Link to="/register" id="cta-create-account-btn"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-forest-800 font-black rounded-xl shadow-xl hover:shadow-2xl hover:bg-mint-50 active:scale-[0.98] transition-all duration-300 text-base"
               >
-                Create Free Account
-                <ArrowRight className="w-5 h-5" />
+                Create Free Account <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link
-                to="/jobs"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-transparent text-white font-bold rounded-xl border-2 border-white/40 hover:bg-white/10 hover:border-white/60 active:scale-[0.98] transition-all duration-300 text-base"
-                id="cta-browse-jobs-btn"
+              <Link to="/expert" id="cta-hire-expert-btn"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-transparent text-white font-bold rounded-xl border-2 border-mint-400/50 hover:bg-mint-400/10 hover:border-mint-300 active:scale-[0.98] transition-all duration-300 text-base"
               >
-                Browse Jobs
-                <ExternalLink className="w-5 h-5" />
+                <Zap className="w-5 h-5 text-mint-400" />
+                Hire an Expert Now
               </Link>
             </div>
           </div>
@@ -558,17 +716,19 @@ function CommunitySection() {
   );
 }
 
-
-// ===== MAIN HOME PAGE COMPONENT =====
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN PAGE EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
 export default function HomePage({ currentUser, onLogout }) {
   return (
     <div className="min-h-screen bg-white custom-scrollbar">
       <Navbar currentUser={currentUser} onLogout={onLogout} />
       <HeroSection />
-      <AboutSection />
-      <RolesSection />
+      <FeatureMatrixSection />
+      <LiveMarketplaceSection />
+      <EscrowTrustSection />
       <ImpactSection />
-      <CommunitySection />
+      <CTASection />
       <Footer />
     </div>
   );
