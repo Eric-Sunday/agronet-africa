@@ -12,7 +12,7 @@
  *  Reads VITE_API_URL at build time, falls back to the live Render service. */
 export const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') ||
-  'https://agronet-backend.onrender.com';
+  'https://agronet-africa-backend.onrender.com';
 
 // ── UUID validation ───────────────────────────────────────────────────────────
 const UUID_RE =

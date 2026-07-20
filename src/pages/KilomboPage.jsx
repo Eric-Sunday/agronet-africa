@@ -10,7 +10,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 // ===== Backend API URL =====
-const API_URL = 'http://localhost:5000';
+import { API_BASE } from '../lib/api';
+const API_URL = API_BASE;
 
 // ===== SEED POSTS =====
 const SEED_POSTS = [
