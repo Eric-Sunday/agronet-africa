@@ -58,15 +58,17 @@ export default function BookingModal({ expert, onClose, onInitiateEscrow }) {
         <div className="flex items-start justify-between p-6 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className={`w-14 h-14 bg-gradient-to-br ${expert.avatarColor} rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}>
-              <span className="text-white font-bold font-display text-lg">{expert.initials}</span>
+            <div className={`w-14 h-14 bg-gradient-to-br ${expert.avatarColor || 'from-agro-500 to-agro-700'} rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}>
+              <span className="text-white font-bold font-display text-lg">
+                {expert.initials || (expert.name || 'E').split(' ').map(n => n[0]).join('').substring(0, 2)}
+              </span>
             </div>
             <div>
-              <h2 className="font-display font-bold text-gray-900 text-lg leading-tight">{expert.name}</h2>
-              <p className="text-sm text-agro-700 font-medium">{expert.specialty}</p>
+              <h2 className="font-display font-bold text-gray-900 text-lg leading-tight">{expert.name || 'Expert Specialist'}</h2>
+              <p className="text-sm text-agro-700 font-medium">{expert.specialty || 'General Consultant'}</p>
               <div className="flex items-center gap-1 mt-0.5">
                 <MapPin className="w-3 h-3 text-gray-400" />
-                <span className="text-xs text-gray-500">{expert.location}</span>
+                <span className="text-xs text-gray-500">{expert.location || 'Remote'}</span>
               </div>
             </div>
           </div>

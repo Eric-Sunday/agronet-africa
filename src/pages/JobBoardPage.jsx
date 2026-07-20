@@ -518,9 +518,9 @@ export default function JobBoardPage({ currentUser, onLogout }) {
 
   const filteredJobs = jobs.filter((job) => {
     const matchSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.company || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.location || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (Array.isArray(job.tags) && job.tags.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchType = filterType === 'All' || job.type === filterType;
     return matchSearch && matchType;

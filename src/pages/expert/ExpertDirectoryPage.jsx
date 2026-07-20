@@ -68,8 +68,8 @@ export default function ExpertDirectoryPage({ currentUser, onLogout, onAddContra
       const q = searchQuery.toLowerCase();
       const matchSearch =
         !q ||
-        exp.name.toLowerCase().includes(q) ||
-        exp.specialty.toLowerCase().includes(q) ||
+        (exp.name || '').toLowerCase().includes(q) ||
+        (exp.specialty || '').toLowerCase().includes(q) ||
         (exp.location || '').toLowerCase().includes(q) ||
         (exp.bio || '').toLowerCase().includes(q);
       const matchSpec  = selectedSpec  === 'All Specialties' || exp.specialty === selectedSpec;

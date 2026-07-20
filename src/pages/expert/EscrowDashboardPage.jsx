@@ -172,18 +172,20 @@ function ContractCard({ contract, onAdvance, onRelease, isFlashing, isReleased, 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Expert Avatar */}
-            <div className={`w-14 h-14 bg-gradient-to-br ${contract.expertAvatarColor} rounded-xl flex items-center justify-center shadow-md flex-shrink-0`}>
-              <span className="text-white font-bold font-display text-lg">{contract.expertInitials}</span>
+            <div className={`w-14 h-14 bg-gradient-to-br ${contract.expertAvatarColor || 'from-agro-500 to-agro-700'} rounded-xl flex items-center justify-center shadow-md flex-shrink-0`}>
+              <span className="text-white font-bold font-display text-lg">
+                {contract.expertInitials || (contract.expertName || 'E').split(' ').map(n => n[0]).join('').substring(0, 2)}
+              </span>
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-display font-bold text-gray-900">{contract.expertName}</h3>
+                <h3 className="font-display font-bold text-gray-900">{contract.expertName || 'Expert Specialist'}</h3>
                 <span className="badge-green text-xs">
                   <ShieldCheck className="w-2.5 h-2.5" />
                   Verified
                 </span>
               </div>
-              <p className="text-agro-700 font-medium text-sm">{contract.specialty}</p>
+              <p className="text-agro-700 font-medium text-sm">{contract.specialty || 'General Consultant'}</p>
               <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
                 <FileText className="w-3 h-3" />
                 {contract.package}
@@ -209,7 +211,7 @@ function ContractCard({ contract, onAdvance, onRelease, isFlashing, isReleased, 
         <p className="text-sm text-sky-800">
           <span className="font-semibold">{formatNaira(contract.amount)}</span>
           {' '}held safely in AgroNet Escrow for{' '}
-          <span className="font-semibold">{contract.expertName.split(' ').slice(0, 2).join(' ')}'s {contract.specialty} Service</span>.
+          <span className="font-semibold">{(contract.expertName || 'Expert').split(' ').slice(0, 2).join(' ')}'s {contract.specialty || 'Service'}</span>.
         </p>
       </div>
 

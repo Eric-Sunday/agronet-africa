@@ -223,7 +223,7 @@ function MatchingJobCard({ job, index, isVisible }) {
       </div>
 
       <div className="flex flex-wrap gap-1.5 mb-4">
-        {job.tags.map((tag) => (
+        {(job.tags || []).map((tag) => (
           <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">
             {tag}
           </span>
@@ -439,12 +439,12 @@ function DreamToRoleMapper() {
 
             {/* Timeline Steps */}
             <div className="relative">
-              {result.steps.map((step, index) => (
+              {(result?.steps || []).map((step, index) => (
                 <TimelineStep
                   key={step.id}
                   step={step}
                   index={index}
-                  totalSteps={result.steps.length}
+                  totalSteps={(result?.steps || []).length}
                   isVisible={showResult}
                 />
               ))}
@@ -466,7 +466,7 @@ function DreamToRoleMapper() {
             </p>
 
             <div className="grid sm:grid-cols-2 gap-5">
-              {result.matchingJobs.map((job, index) => (
+              {(result?.matchingJobs || []).map((job, index) => (
                 <MatchingJobCard
                   key={job.id}
                   job={job}

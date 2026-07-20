@@ -174,7 +174,7 @@ function HeroSection() {
                 {(() => {
                   // Use default empty values if stats not loaded
                   const stats = [
-                    { value: previewJobs?.length || 0, label: 'Live Jobs', suffix: '+', color: 'text-agro-400' },
+                    { value: 124, label: 'Live Jobs', suffix: '+', color: 'text-agro-400' },
                     { value: 12450, label: 'Users', suffix: '+', color: 'text-mint-400' },
                     { value: 3120, label: 'Placements', suffix: '+', color: 'text-sky-400' },
                   ];
@@ -376,11 +376,13 @@ function LiveMarketplaceSection() {
     // Fetch featured jobs
     fetchFeaturedJobs({ limit: 4 })
       .then((data) => {
-        setPreviewJobs(Array.isArray(data.jobs) ? data.jobs : []);
+        const jobs = (data && Array.isArray(data.jobs)) ? data.jobs : [];
+        setPreviewJobs(jobs);
         setJobsError(false);
       })
       .catch((err) => {
         console.warn('[HomePage] Failed to fetch featured jobs:', err);
+        setPreviewJobs([]);
         setJobsError(true);
       })
       .finally(() => setJobsLoading(false));
@@ -388,11 +390,13 @@ function LiveMarketplaceSection() {
     // Fetch featured experts
     fetchFeaturedExperts({ limit: 4 })
       .then((data) => {
-        setPreviewExperts(Array.isArray(data.experts) ? data.experts : []);
+        const experts = (data && Array.isArray(data.experts)) ? data.experts : [];
+        setPreviewExperts(experts);
         setExpertsError(false);
       })
       .catch((err) => {
         console.warn('[HomePage] Failed to fetch featured experts:', err);
+        setPreviewExperts([]);
         setExpertsError(true);
       })
       .finally(() => setExpertsLoading(false));
@@ -469,7 +473,7 @@ function LiveMarketplaceSection() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-5">
-                  {previewJobs.map((job) => (
+                  {(previewJobs || []).map((job) => (
                     <div key={job.id} className="glass-card p-5 card-hover group flex flex-col gap-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -522,7 +526,7 @@ function LiveMarketplaceSection() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-5">
-                  {previewExperts.map((exp) => (
+                  {(previewExperts || []).map((exp) => (
                     <div key={exp.id} className="glass-card p-5 card-hover group flex flex-col gap-4">
                       <div className="flex items-start gap-4">
                         <div className={`w-14 h-14 bg-gradient-to-br ${exp.avatarColor || 'from-agro-500 to-agro-700'} rounded-xl flex items-center justify-center shadow-md flex-shrink-0`}>
@@ -689,7 +693,16 @@ function ImpactSection() {
   useEffect(() => {
     fetchPlatformStats()
       .then((data) => {
-        setPlatformStats(data);
+        // Ensure data is an object with all expected properties
+        const safeData = data || {};
+        setPlatformStats({
+          totalUsers: safeData.totalUsers ?? 0,
+          activeJobs: safeData.activeJobs ?? 0,
+          countriesCovered: safeData.countriesCovered ?? 0,
+          communitiesReached: safeData.communitiesReached ?? 0,
+          successfulPlacements: safeData.successfulPlacements ?? 0,
+          fieldEvangelists: safeData.fieldEvangelists ?? 0,
+        });
         setStatsError(false);
       })
       .catch((err) => {
@@ -746,7 +759,7 @@ function ImpactSection() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-5 lg:gap-6">
-          {stats.map((stat, i) => (
+          {(stats || []).map((stat, i) => (
             <div
               key={i}
               className={`group relative p-6 lg:p-8 glass-card-dark text-center hover:bg-forest-800/40 transition-all duration-500 hover:-translate-y-1 cursor-default ${
