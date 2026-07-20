@@ -42,6 +42,10 @@ export default function LoginPage({ onLogin }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || 'Invalid credentials.');
       
+      // Securely store the returned token and user details into local storage
+      localStorage.setItem('token', json.token || json.data?.token || 'mock_token_for_now');
+      localStorage.setItem('user', JSON.stringify(json.data));
+
       setSuccess(true);
       setTimeout(() => {
         onLogin(json.data);

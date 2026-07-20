@@ -21,6 +21,22 @@ const UUID_RE =
 /** Returns true only if `id` is a proper UUID string. */
 export const isRealUUID = (id) => typeof id === 'string' && UUID_RE.test(id);
 
+
+// ── Core Fetch Wrapper ───────────────────────────────────────────────────────
+export async function apiFetch(url, options = {}) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return fetch(url, { ...options, headers });
+}
+
 // ── User Profile ─────────────────────────────────────────────────────────────
 
 /**
@@ -46,7 +62,7 @@ export async function fetchUserProfile(userId) {
 
   const url = `${API_BASE}/api/users/${userId}`;
 
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -96,7 +112,7 @@ export async function fetchJobs({ page = 1, limit = 100, status = 'active', loca
   const params = new URLSearchParams({ page, limit, status });
   if (location) params.set('location', location);
 
-  const res = await fetch(`${API_BASE}/api/jobs?${params.toString()}`, {
+  const res = await apiFetch(`${API_BASE}/api/jobs?${params.toString()}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -119,7 +135,7 @@ export async function fetchJobs({ page = 1, limit = 100, status = 'active', loca
  * @returns {Promise<Job>}
  */
 export async function postJob(jobPayload) {
-  const res = await fetch(`${API_BASE}/api/jobs`, {
+  const res = await apiFetch(`${API_BASE}/api/jobs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(jobPayload),
@@ -141,7 +157,7 @@ export async function postJob(jobPayload) {
 export async function fetchFeaturedJobs({ limit = 4 } = {}) {
   const params = new URLSearchParams({ status: 'active', limit, featured: 'true' });
 
-  const res = await fetch(`${API_BASE}/api/jobs/featured?${params.toString()}`, {
+  const res = await apiFetch(`${API_BASE}/api/jobs/featured?${params.toString()}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -176,7 +192,7 @@ export async function fetchFeaturedJobs({ limit = 4 } = {}) {
  * @throws {Error} on non-2xx or network failure
  */
 export async function fetchPlatformStats() {
-  const res = await fetch(`${API_BASE}/api/platform/stats`, {
+  const res = await apiFetch(`${API_BASE}/api/platform/stats`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -211,7 +227,7 @@ export async function fetchPlatformStats() {
 export async function fetchFeaturedExperts({ limit = 4 } = {}) {
   const params = new URLSearchParams({ limit, featured: 'true' });
 
-  const res = await fetch(`${API_BASE}/api/experts/featured?${params.toString()}`, {
+  const res = await apiFetch(`${API_BASE}/api/experts/featured?${params.toString()}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -241,7 +257,7 @@ export async function fetchExperts({ page = 1, limit = 100, specialty } = {}) {
   const params = new URLSearchParams({ page, limit });
   if (specialty) params.set('specialty', specialty);
 
-  const res = await fetch(`${API_BASE}/api/experts?${params.toString()}`, {
+  const res = await apiFetch(`${API_BASE}/api/experts?${params.toString()}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -263,7 +279,7 @@ export async function fetchExperts({ page = 1, limit = 100, specialty } = {}) {
  * @throws {Error} on non-2xx or network failure
  */
 export async function fetchExpertSpecialties() {
-  const res = await fetch(`${API_BASE}/api/experts/specialties`, {
+  const res = await apiFetch(`${API_BASE}/api/experts/specialties`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
