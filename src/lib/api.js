@@ -284,14 +284,13 @@ export async function fetchPlatformStats() {
 // ── Experts / Agrilencer ───────────────────────────────────────────────────────
 
 export async function fetchFeaturedExperts({ limit = 4 } = {}) {
-  const params = new URLSearchParams({ limit, featured: 'true' });
+  const params = new URLSearchParams({ limit });
 
-  const res = await apiFetch(`${API_BASE}/api/experts/featured?${params.toString()}`, {
+  const res = await apiFetch(`${API_BASE}/api/agrilencer/experts/featured?${params.toString()}`, {
     method: 'GET',
   });
 
   if (!res.ok) {
-    if (res.status === 404) return fetchExperts({ limit });
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || `Failed to fetch featured experts (${res.status}).`);
   }
@@ -300,11 +299,13 @@ export async function fetchFeaturedExperts({ limit = 4 } = {}) {
   return { experts: json.data ?? [], pagination: json.pagination ?? {} };
 }
 
-export async function fetchExperts({ page = 1, limit = 100, specialty } = {}) {
+export async function fetchExperts({ page = 1, limit = 100, specialty, state, search } = {}) {
   const params = new URLSearchParams({ page, limit });
   if (specialty) params.set('specialty', specialty);
+  if (state)     params.set('state', state);
+  if (search)    params.set('search', search);
 
-  const res = await apiFetch(`${API_BASE}/api/experts?${params.toString()}`, {
+  const res = await apiFetch(`${API_BASE}/api/agrilencer/experts?${params.toString()}`, {
     method: 'GET',
   });
 
@@ -318,7 +319,7 @@ export async function fetchExperts({ page = 1, limit = 100, specialty } = {}) {
 }
 
 export async function fetchExpertSpecialties() {
-  const res = await apiFetch(`${API_BASE}/api/experts/specialties`, {
+  const res = await apiFetch(`${API_BASE}/api/agrilencer/experts/specialties`, {
     method: 'GET',
   });
 
@@ -328,5 +329,77 @@ export async function fetchExpertSpecialties() {
   }
 
   const json = await res.json();
+  return json.data ?? [];
+}
+
+// ── Agrilencer Bookings ───────────────────────────────────────────────────────
+
+/**
+ * POST /api/agrilencer/bookings  (JWT-authenticated)
+ * Create a consultation booking with escrow.
+ *
+ * @param {{ expert_id: string, farm_issue_title: string, description: string,
+ *            urgency_level?: string, escrow_amount: number }} payload
+ * @returns {Promise<object>} Created booking record
+ */
+export async function createBooking(payload) {
+  const res = await apiFetch(`${API_BASE}/api/agrilencer/bookings`, {
+    method: 'POST',
+    body:   JSON.stringify(payload),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw Object.assign(
+      new Error(json.message || `Failed to create booking (${res.status}).`),
+      { status: res.status }
+    );
+  }
+  return json.data;
+}
+
+/**
+ * PATCH /api/agrilencer/bookings/:id/status  (JWT-authenticated)
+ * Update booking_status and/or escrow_status.
+ * Completing a booking automatically disburses escrow server-side.
+ *
+ * @param {string} bookingId
+ * @param {{ booking_status?: string, escrow_status?: string }} payload
+ * @returns {Promise<object>} Updated booking record
+ */
+export async function updateBookingStatus(bookingId, payload) {
+  const res = await apiFetch(`${API_BASE}/api/agrilencer/bookings/${bookingId}/status`, {
+    method: 'PATCH',
+    body:   JSON.stringify(payload),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw Object.assign(
+      new Error(json.message || `Failed to update booking (${res.status}).`),
+      { status: res.status }
+    );
+  }
+  return json.data;
+}
+
+/**
+ * GET /api/agrilencer/bookings  (JWT-authenticated)
+ * Fetch all bookings where the caller is either the client or the expert.
+ *
+ * @returns {Promise<object[]>} Array of booking records
+ */
+export async function fetchMyBookings() {
+  const res = await apiFetch(`${API_BASE}/api/agrilencer/bookings`, {
+    method: 'GET',
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw Object.assign(
+      new Error(json.message || `Failed to fetch bookings (${res.status}).`),
+      { status: res.status }
+    );
+  }
   return json.data ?? [];
 }
