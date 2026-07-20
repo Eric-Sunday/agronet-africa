@@ -105,18 +105,23 @@ export async function loginUser({ email, password }) {
 
 /**
  * POST /api/users (registration)
+ *
+ * Accepts a role-specific payload:
+ *   Job Seeker:  { role: 'job_seeker', name, email, password, location, specialty, skills }
+ *   Employer:    { role: 'employer', company_name, email, password, location, tax_id, industry, website }
+ *
  * Returns { token, user }
  */
-export async function registerUser({ name, email, password, location, role }) {
+export async function registerUser(payload) {
+  // Normalise email regardless of role
+  const body = {
+    ...payload,
+    email: payload.email.toLowerCase().trim(),
+  };
+
   const res = await apiFetch(`${API_BASE}/api/users`, {
     method: 'POST',
-    body: JSON.stringify({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password,
-      location: location.trim(),
-      role: role || 'farmer',
-    }),
+    body: JSON.stringify(body),
   });
 
   const json = await res.json().catch(() => ({}));
@@ -129,6 +134,32 @@ export async function registerUser({ name, email, password, location, role }) {
 
   saveSession(json.token, json.user);
   return { token: json.token, user: json.user };
+}
+
+/**
+ * POST /api/applications  — Job Seeker only
+ * Returns the created application object.
+ */
+export async function applyForJob(jobId, coverNote = '') {
+  const res = await apiFetch(`${API_BASE}/api/jobs/${jobId}/apply`, {
+    method: 'POST',
+    body: JSON.stringify({ cover_note: coverNote }),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (res.status === 403) {
+    throw Object.assign(
+      new Error(json.error || 'Access denied. Employers cannot apply for jobs.'),
+      { status: 403 }
+    );
+  }
+  if (!res.ok) {
+    throw Object.assign(
+      new Error(json.message || `Application failed (${res.status}).`),
+      { status: res.status }
+    );
+  }
+  return json.data;
 }
 
 // ── User Profile ─────────────────────────────────────────────────────────────

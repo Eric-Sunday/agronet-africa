@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { API_BASE } from '../lib/api';
+import { API_BASE, apiFetch } from '../lib/api';
 
 // ===== Intersection Observer Hook =====
 function useInView(options = {}) {
@@ -40,8 +40,11 @@ const NICHE_SKILLS = [
 ];
 
 // ===== Job Card Component =====
-function JobCard({ job, index }) {
+function JobCard({ job, index, currentUser }) {
   const [ref, isInView] = useInView();
+  const isEmployer    = currentUser?.role === 'employer';
+  const isJobSeeker   = currentUser?.role === 'job_seeker';
+  const isOwner       = isEmployer && job.employer_id === currentUser?.id;
 
   // Generate a consistent color based on job id
   const colors = [
@@ -106,14 +109,31 @@ function JobCard({ job, index }) {
         ))}
       </div>
 
-      {/* Apply Button */}
-      <button
-        id={`apply-btn-${job.id}`}
-        className="w-full py-3 bg-gradient-to-r from-agro-600 to-agro-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-agro-500/20 hover:shadow-xl hover:shadow-agro-500/30 active:scale-[0.98] transition-all duration-300"
-      >
-        Apply Now
-        <ArrowRight className="w-4 h-4" />
-      </button>
+      {/* Apply / Employer CTA */}
+      {isJobSeeker && (
+        <button
+          id={`apply-btn-${job.id}`}
+          className="w-full py-3 bg-gradient-to-r from-agro-600 to-agro-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-agro-500/20 hover:shadow-xl hover:shadow-agro-500/30 active:scale-[0.98] transition-all duration-300"
+        >
+          Apply Now
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      )}
+      {isOwner && (
+        <div className="w-full py-3 bg-agro-50 border-2 border-agro-200 text-agro-700 font-semibold rounded-xl flex items-center justify-center gap-2">
+          <Briefcase className="w-4 h-4" />
+          Applicant Management
+        </div>
+      )}
+      {!currentUser && (
+        <button
+          id={`apply-btn-${job.id}`}
+          className="w-full py-3 bg-gradient-to-r from-agro-600 to-agro-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-agro-500/20 hover:shadow-xl hover:shadow-agro-500/30 active:scale-[0.98] transition-all duration-300"
+        >
+          Apply Now
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -195,17 +215,13 @@ function PostJobForm({ onSubmit, onCancel }) {
 
       try {
         // Send the new job to the backend API for permanent storage in SQLite
-        const response = await fetch(`${API_BASE}/api/jobs`, {
+        const response = await apiFetch(`${API_BASE}/api/jobs`, {
           method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({
-            title:    form.title.trim(),
-            company:  form.company.trim(),
-            location: form.location.trim(),
-            salary:   form.salary.trim(),
-            type:     form.type,
-            tags:     form.skills,
-            postedAt: new Date().toISOString().split('T')[0],
+            title:       form.title.trim(),
+            description: form.company.trim(),
+            location:    form.location.trim(),
+            salary_range: form.salary.trim(),
           }),
         });
 
@@ -485,8 +501,10 @@ function PostJobForm({ onSubmit, onCancel }) {
 
 
 // ===== MAIN JOB BOARD PAGE =====
-export default function JobBoardPage({ currentUser, onLogout }) {
-  const [showForm, setShowForm]     = useState(false);
+export default function JobBoardPage({ currentUser, onLogout, forceShowForm = false }) {
+  const isEmployer  = currentUser?.role === 'employer';
+  const isJobSeeker = currentUser?.role === 'job_seeker';
+  const [showForm, setShowForm]     = useState(forceShowForm);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
   const [jobs, setJobs]             = useState([]);
@@ -569,28 +587,24 @@ export default function JobBoardPage({ currentUser, onLogout }) {
               />
             </div>
 
-            {/* Post Job Button */}
-            <button
-              id="open-post-form-btn"
-              onClick={() => setShowForm(!showForm)}
-              className={`flex items-center gap-2 px-6 py-3.5 font-bold rounded-xl shadow-lg transition-all duration-300 active:scale-[0.98] ${
-                showForm
-                  ? 'bg-gray-200 text-gray-600 hover:bg-gray-300 shadow-gray-200/50'
-                  : 'bg-gradient-to-r from-agro-600 to-agro-500 text-white shadow-agro-500/25 hover:shadow-xl hover:shadow-agro-500/40'
-              }`}
-            >
-              {showForm ? (
-                <>
-                  <X className="w-5 h-5" />
-                  Close Form
-                </>
-              ) : (
-                <>
-                  <Plus className="w-5 h-5" />
-                  Post a Job
-                </>
-              )}
-            </button>
+            {/* Post Job Button — only visible to employers */}
+            {isEmployer && (
+              <button
+                id="open-post-form-btn"
+                onClick={() => setShowForm(!showForm)}
+                className={`flex items-center gap-2 px-6 py-3.5 font-bold rounded-xl shadow-lg transition-all duration-300 active:scale-[0.98] ${
+                  showForm
+                    ? 'bg-gray-200 text-gray-600 hover:bg-gray-300 shadow-gray-200/50'
+                    : 'bg-gradient-to-r from-agro-600 to-agro-500 text-white shadow-agro-500/25 hover:shadow-xl hover:shadow-agro-500/40'
+                }`}
+              >
+                {showForm ? (
+                  <><X className="w-5 h-5" />Close Form</>
+                ) : (
+                  <><Plus className="w-5 h-5" />Post a Job</>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Filter chips */}
@@ -657,7 +671,7 @@ export default function JobBoardPage({ currentUser, onLogout }) {
           {filteredJobs.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredJobs.map((job, index) => (
-                  <JobCard key={job.id} job={job} index={index} />
+                  <JobCard key={job.id} job={job} index={index} currentUser={currentUser} />
                 ))}
               </div>
             ) : (

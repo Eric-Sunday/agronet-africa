@@ -6,13 +6,13 @@ import {
   FileText, ExternalLink, Sparkles, GraduationCap,
   Save, Camera, Rocket, ArrowRight, Target, Zap,
   ChevronRight, Building2, DollarSign, Clock, Tag,
-  AlertCircle, Loader2
+  AlertCircle, Loader2, ShieldAlert
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { mapDreamToCareer } from '../data/careerMapper';
 import { fetchUserProfile, formatJoinDate, clearSession } from '../lib/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // ===== Intersection Observer Hook =====
 function useInView(options = {}) {
@@ -541,6 +541,17 @@ function buildInitialProfile(currentUser) {
 // ===== MAIN PROFILE PAGE =====
 export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onLogout }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // ── Access-denied banner from RoleRoute redirect ─────────────────────────
+  const [accessError, setAccessError] = useState(() => searchParams.get('error') === 'access_denied');
+  // Clear the error param from the URL after reading it
+  useEffect(() => {
+    if (searchParams.get('error')) {
+      setSearchParams({}, { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Profile state — seeded immediately from currentUser (no Kwame flash) ──
   const [profile, setProfile] = useState(() => buildInitialProfile(currentUser));
 
@@ -710,6 +721,27 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-2.5 bg-white border border-agro-200 rounded-full shadow-lg shadow-agro-900/10 text-sm font-medium text-agro-700 animate-fade-in-up">
           <Loader2 className="w-4 h-4 animate-spin text-agro-500" />
           Loading your profile…
+        </div>
+      )}
+
+      {/* ── Access-Denied Banner (from RoleRoute redirect) ─────────────────── */}
+      {accessError && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-0 relative z-10">
+          <div className="flex items-start gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-2xl animate-fade-in-up">
+            <ShieldAlert className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-800">Access Denied — Restricted Route</p>
+              <p className="text-sm text-red-600 mt-0.5">
+                Only registered employers can create job listings. Your account type is <strong>Job Seeker</strong>.
+              </p>
+            </div>
+            <button
+              onClick={() => setAccessError(false)}
+              className="p-1 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 

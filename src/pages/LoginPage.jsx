@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Leaf, Eye, EyeOff, ArrowRight, LogIn, CheckCircle } from 'lucide-react';
 import { loginUser } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
-export default function LoginPage({ onLogin }) {
-  const navigate = useNavigate();
+export default function LoginPage() {
+  const navigate    = useNavigate();
+  const { login }   = useAuth();
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -24,11 +26,11 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      const { user } = await loginUser({ email, password });
+      const { user, token } = await loginUser({ email, password });
 
       setSuccess(true);
       setTimeout(() => {
-        onLogin(user);
+        login(user, token);
         navigate('/profile');
       }, 900);
     } catch (err) {

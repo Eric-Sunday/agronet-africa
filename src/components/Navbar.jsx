@@ -1,15 +1,35 @@
+// src/components/Navbar.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Role-aware navbar. Uses AuthContext so no prop-drilling is needed.
+// - Job Seekers: see "Find Jobs", "Hire an Expert" — no "Post a Job" link
+// - Employers: see "Find Jobs", "Hire an Expert", "Post a Job"
+// - Guests: see all links + Sign In / Register buttons
+// ─────────────────────────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, X, Leaf, ArrowRight, Briefcase, Zap, ShieldCheck,
   LogOut, LogIn, PlusCircle, UserCircle
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ currentUser, onLogout }) {
+export default function Navbar({ currentUser: currentUserProp, onLogout: onLogoutProp }) {
+  // Prefer AuthContext; fall back to legacy props for pages not yet migrated
+  const authCtx = useAuth();
+  const currentUser = authCtx?.currentUser ?? currentUserProp;
+  const handleLogout = () => {
+    authCtx?.logout?.();
+    onLogoutProp?.();
+    navigate('/');
+  };
+
   const [isOpen, setIsOpen]     = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location  = useLocation();
   const navigate  = useNavigate();
+
+  const isEmployer  = currentUser?.role === 'employer';
+  const isJobSeeker = currentUser?.role === 'job_seeker';
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -22,17 +42,18 @@ export default function Navbar({ currentUser, onLogout }) {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // ── Center nav links ───────────────────────────────────────────────────────
+  // ── Center nav links — role-filtered ──────────────────────────────────────
   const centerLinks = [
-    { label: 'Find Long-term Jobs',   to: '/jobs',    icon: Briefcase },
-    { label: 'Hire an Expert',        to: '/expert',  icon: Zap,        premium: true },
-    { label: 'Post a Requirement',    to: '/jobs',    icon: PlusCircle  },
-  ];
+    { label: 'Find Long-term Jobs', to: '/jobs',   icon: Briefcase,  show: true },
+    { label: 'Hire an Expert',      to: '/expert', icon: Zap,        show: true, premium: true },
+    // "Post a Job" link only for employers (or guests who haven't chosen yet)
+    { label: 'Post a Job',          to: '/jobs/new', icon: PlusCircle, show: isEmployer || !currentUser },
+  ].filter(l => l.show);
 
-  // ── Auth / user links (mobile only) ───────────────────────────────────────
+  // ── Mobile extras ─────────────────────────────────────────────────────────
   const mobileExtras = [
-    { label: 'My Escrow Contracts',  to: '/expert/escrow-dashboard', icon: ShieldCheck },
-    { label: 'My Profile',           to: '/profile',                 icon: UserCircle  },
+    { label: 'My Escrow Contracts', to: '/expert/escrow-dashboard', icon: ShieldCheck },
+    { label: 'My Profile',          to: '/profile',                 icon: UserCircle  },
   ];
 
   const isActive = (path) => {
@@ -40,16 +61,19 @@ export default function Navbar({ currentUser, onLogout }) {
     return location.pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
-    onLogout?.();
-    navigate('/');
-  };
-
   const initials = currentUser?.name
     ? currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+    : currentUser?.company_name
+    ? currentUser.company_name.substring(0, 2).toUpperCase()
     : '?';
 
-  const roleLabel = (role) => role ? role.replace('_', ' ') : '';
+  const displayName = currentUser?.name || currentUser?.company_name || 'User';
+
+  const roleLabel = (role) => {
+    if (role === 'job_seeker') return 'Job Seeker';
+    if (role === 'employer')   return 'Employer';
+    return role ? role.replace('_', ' ') : '';
+  };
 
   return (
     <nav
@@ -108,7 +132,7 @@ export default function Navbar({ currentUser, onLogout }) {
                     <span className="text-white text-xs font-bold">{initials}</span>
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-semibold text-gray-900 leading-tight">{currentUser.name.split(' ')[0]}</p>
+                    <p className="text-sm font-semibold text-gray-900 leading-tight">{displayName.split(' ')[0]}</p>
                     <p className="text-xs text-agro-600 leading-tight">{roleLabel(currentUser.role)}</p>
                   </div>
                 </Link>
@@ -197,7 +221,7 @@ export default function Navbar({ currentUser, onLogout }) {
                       <span className="text-white text-xs font-bold">{initials}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-900">{currentUser.name}</p>
+                      <p className="text-sm font-bold text-gray-900">{displayName}</p>
                       <p className="text-xs text-agro-600">{roleLabel(currentUser.role)}</p>
                     </div>
                   </div>
