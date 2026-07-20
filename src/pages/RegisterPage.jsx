@@ -4,10 +4,11 @@ import {
   Leaf, Eye, EyeOff, UserPlus, CheckCircle, Building2,
   Search, Megaphone, ArrowRight, Check
 } from 'lucide-react';
+import { registerUser } from '../lib/api';
 
 const ROLES = [
   {
-    id: 'Job_Seeker',
+    id: 'farmer',
     title: 'Job Seeker',
     icon: Search,
     emoji: '🌱',
@@ -18,7 +19,7 @@ const ROLES = [
     textColor: 'text-earth-700',
   },
   {
-    id: 'Agribusiness_Employer',
+    id: 'agent',
     title: 'Agribusiness Employer',
     icon: Building2,
     emoji: '🏢',
@@ -29,7 +30,7 @@ const ROLES = [
     textColor: 'text-agro-700',
   },
   {
-    id: 'Field_Evangelist',
+    id: 'admin',
     title: 'Field Evangelist',
     icon: Megaphone,
     emoji: '📢',
@@ -42,7 +43,7 @@ const ROLES = [
 ];
 
 const BENEFITS = [
-  'Access Africa\'s largest agri-jobs platform',
+  "Access Africa's largest agri-jobs platform",
   'AI-powered Dream-to-Role Career Mapper',
   'Community forum — The Kilombo',
   'Micro-learning certifications & badges',
@@ -56,40 +57,46 @@ export default function RegisterPage({ onLogin }) {
   const [form, setForm]           = useState({ name: '', email: '', location: '', password: '', confirm: '' });
   const [showPass, setShowPass]   = useState(false);
   const [errors, setErrors]       = useState({});
+  const [serverError, setServerError] = useState('');
   const [loading, setLoading]     = useState(false);
   const [success, setSuccess]     = useState(false);
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim())     e.name = 'Full name is required';
-    if (!form.email.includes('@')) e.email = 'Valid email is required';
-    if (!form.location.trim()) e.location = 'Location is required';
-    if (form.password.length < 6) e.password = 'Password must be at least 6 characters';
+    if (!form.name.trim())           e.name     = 'Full name is required';
+    if (!form.email.includes('@'))   e.email    = 'Valid email is required';
+    if (!form.location.trim())       e.location = 'Location is required';
+    if (form.password.length < 6)   e.password = 'Password must be at least 6 characters';
     if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const e2 = validate();
-    setErrors(e2);
-    if (Object.keys(e2).length > 0) return;
+    setServerError('');
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
 
     setLoading(true);
-    setTimeout(() => {
-      const newUser = {
-        id: `usr_${Date.now()}`,
-        name: form.name.trim(),
-        email: form.email.trim(),
-        location: form.location.trim(),
-        role: selectedRole,
-      };
+    try {
+      const { user } = await registerUser({
+        name:     form.name,
+        email:    form.email,
+        password: form.password,
+        location: form.location,
+        role:     selectedRole,
+      });
+
       setSuccess(true);
       setTimeout(() => {
-        onLogin(newUser);
+        onLogin(user);
         navigate('/profile');
       }, 1000);
-    }, 900);
+    } catch (err) {
+      setLoading(false);
+      setServerError(err.message || 'Registration failed. Please try again.');
+    }
   };
 
   const field = (id, label, type, placeholder, value, key, extra = {}) => (
@@ -135,7 +142,7 @@ export default function RegisterPage({ onLogin }) {
                   {step === 1 ? 'Choose your role' : 'Create your account'}
                 </h1>
                 <p className="text-sm text-agro-100 mt-1">
-                  {step === 1 ? 'Select how you\'ll use Agro Africa Net' : 'Fill in your details to get started'}
+                  {step === 1 ? "Select how you'll use Agro Africa Net" : 'Fill in your details to get started'}
                 </p>
               </div>
               {/* Step indicator */}
@@ -215,11 +222,9 @@ export default function RegisterPage({ onLogin }) {
                   </button>
                 </div>
 
-                {field('reg-name', 'Full Name', 'text', 'e.g. Kwame Asante', form.name, 'name')}
-
-                {field('reg-email', 'Email Address', 'email', 'your@email.com', form.email, 'email')}
-
-                {field('reg-location', 'Location', 'text', 'e.g. Accra, Ghana', form.location, 'location')}
+                {field('reg-name',     'Full Name',        'text',     'e.g. Kwame Asante',  form.name,     'name')}
+                {field('reg-email',    'Email Address',    'email',    'your@email.com',      form.email,    'email')}
+                {field('reg-location', 'Location',         'text',     'e.g. Accra, Ghana',   form.location, 'location')}
 
                 <div>
                   <label htmlFor="reg-password" className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
@@ -237,6 +242,13 @@ export default function RegisterPage({ onLogin }) {
                 </div>
 
                 {field('reg-confirm', 'Confirm Password', 'password', 'Repeat your password', form.confirm, 'confirm')}
+
+                {/* Server-side error */}
+                {serverError && (
+                  <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                    {serverError}
+                  </div>
+                )}
 
                 <button
                   id="register-submit-btn"
@@ -264,7 +276,7 @@ export default function RegisterPage({ onLogin }) {
           </div>
         </div>
 
-        <p className="text-center text-xs text-agro-300 mt-6">© 2025 Agro Africa Net · Demo Platform</p>
+        <p className="text-center text-xs text-agro-300 mt-6">© 2025 AgroNet Africa · Agricultural Careers Platform</p>
       </div>
     </div>
   );

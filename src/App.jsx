@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import JobBoardPage from './pages/JobBoardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -8,19 +8,24 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ExpertDirectoryPage from './pages/expert/ExpertDirectoryPage';
 import EscrowDashboardPage from './pages/expert/EscrowDashboardPage';
+import { getPersistedUser, clearSession } from './lib/api';
 
 export default function App() {
-  // ── Auth state ──────────────────────────────────────────────────────────────────
-  const [currentUser, setCurrentUser] = useState(null);
+  // ── Auth state — rehydrated from localStorage on first load ─────────────────
+  const [currentUser, setCurrentUser] = useState(() => getPersistedUser());
 
-  const handleLogin  = (user) => setCurrentUser(user);
-  const handleLogout = ()     => setCurrentUser(null);
+  const handleLogin = (user) => setCurrentUser(user);
 
-  // ── GAP badge state (The Kilombo → Profile) ─────────────────────────────────────
+  const handleLogout = () => {
+    clearSession();
+    setCurrentUser(null);
+  };
+
+  // ── GAP badge state (The Kilombo → Profile) ──────────────────────────────────
   const [gapBadgeUnlocked, setGapBadgeUnlocked] = useState(false);
   const handleUnlockGAPBadge = () => setGapBadgeUnlocked(true);
 
-  // ── Agrilencer: Escrow Contracts state ──────────────────────────────────────────
+  // ── Agrilencer: Escrow Contracts state ────────────────────────────────────────
   const [contracts, setContracts] = useState([]);
   const handleAddContract = (newContract) =>
     setContracts((prev) => [newContract, ...prev]);
@@ -32,7 +37,11 @@ export default function App() {
         <Route path="/login"    element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/register" element={<RegisterPage onLogin={handleLogin} />} />
         <Route path="/jobs"     element={<JobBoardPage currentUser={currentUser} onLogout={handleLogout} />} />
-        <Route path="/profile"  element={<ProfilePage gapBadgeUnlocked={gapBadgeUnlocked} currentUser={currentUser} onLogout={handleLogout} />} />
+        <Route path="/profile"  element={
+          currentUser
+            ? <ProfilePage gapBadgeUnlocked={gapBadgeUnlocked} currentUser={currentUser} onLogout={handleLogout} />
+            : <Navigate to="/login" replace />
+        } />
         <Route path="/kilombo"  element={
           <KilomboPage
             onUnlockGAPBadge={handleUnlockGAPBadge}

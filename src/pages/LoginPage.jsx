@@ -1,16 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Leaf, Eye, EyeOff, ArrowRight, LogIn, CheckCircle } from 'lucide-react';
-import { API_BASE } from '../lib/api';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LoginPage — authenticates against the live Render backend.
-// POST /api/auth/login  →  { success, data: { id, name, email, role, ... } }
-//
-// NOTE: The backend does not yet have a /api/auth/login endpoint — when it does,
-// swap the TODO block below.  Until then we do a GET /api/users/:email lookup
-// using the registered email as a fallback (demo-safe).
-// ─────────────────────────────────────────────────────────────────────────────
+import { loginUser } from '../lib/api';
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -33,25 +24,13 @@ export default function LoginPage({ onLogin }) {
     setLoading(true);
 
     try {
-      // ── Try the backend auth endpoint first ────────────────────────────────
-      const res  = await fetch(`${API_BASE}/api/auth/login`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email: email.toLowerCase().trim(), password }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Invalid credentials.');
-      
-      // Securely store the returned token and user details into local storage
-      localStorage.setItem('token', json.token || json.data?.token || 'mock_token_for_now');
-      localStorage.setItem('user', JSON.stringify(json.data));
+      const { user } = await loginUser({ email, password });
 
       setSuccess(true);
       setTimeout(() => {
-        onLogin(json.data);
+        onLogin(user);
         navigate('/profile');
       }, 900);
-
     } catch (err) {
       setLoading(false);
       setError(err.message || 'Sign-in failed. Please check your credentials and try again.');

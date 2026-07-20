@@ -11,7 +11,8 @@ import {
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { mapDreamToCareer } from '../data/careerMapper';
-import { fetchUserProfile, formatJoinDate, isRealUUID } from '../lib/api';
+import { fetchUserProfile, formatJoinDate, clearSession } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
 
 // ===== Intersection Observer Hook =====
 function useInView(options = {}) {
@@ -539,6 +540,7 @@ function buildInitialProfile(currentUser) {
 
 // ===== MAIN PROFILE PAGE =====
 export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onLogout }) {
+  const navigate = useNavigate();
   // ── Profile state — seeded immediately from currentUser (no Kwame flash) ──
   const [profile, setProfile] = useState(() => buildInitialProfile(currentUser));
 
@@ -592,41 +594,30 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
 
   // ── Fetch live profile from backend whenever currentUser changes ──────────
   useEffect(() => {
-    // If there's no logged-in user, reset to blank and bail
+    // If there's no logged-in user, don't show a profile at all
     if (!currentUser) {
       setProfile(buildInitialProfile(null));
       setProfileError(null);
       return;
     }
 
-    // Immediately seed from the auth context so the page renders something
-    // meaningful even before the API responds (or if it fails).
+    // Immediately seed from auth context so the page renders while fetching
     const authSeeded = buildInitialProfile(currentUser);
     setProfile(authSeeded);
     setEditForm(authSeeded);
 
-    // Only hit the backend if the user has a real UUID (registered users).
-    // Demo mock IDs (usr_002, etc.) will skip the fetch and use the auth seed.
-    if (!isRealUUID(currentUser.id)) {
-      setProfileError(
-        'Live profile sync is available for registered accounts. ' +
-        'Demo accounts display data from your login session.'
-      );
-      return;
-    }
-
-    let cancelled = false; // prevent state updates on unmounted component
+    let cancelled = false;
 
     const loadProfile = async () => {
       setProfileLoading(true);
       setProfileError(null);
 
       try {
-        const data = await fetchUserProfile(currentUser.id);
+        // Uses the JWT-protected /api/users/profile endpoint — no userId needed
+        const data = await fetchUserProfile();
 
         if (cancelled) return;
 
-        // Map backend DB fields → local profile shape
         const merged = {
           ...authSeeded,
           id:         data.id         || authSeeded.id,
@@ -637,18 +628,21 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
           role:       data.role       || authSeeded.role,
           isVerified: data.is_verified !== undefined ? data.is_verified : authSeeded.isVerified,
           joinedAt:   formatJoinDate(data.created_at),
-          // bio / skills are not stored in the backend yet — keep auth seed
         };
 
         setProfile(merged);
         setEditForm(merged);
       } catch (err) {
         if (cancelled) return;
-        // Graceful fallback — profile already seeded from auth context above
-        console.warn('[ProfilePage] Backend fetch failed, using auth-seeded data:', err.message);
+        // On 401 the session is stale — clear it and redirect to login
+        if (err.status === 401) {
+          clearSession();
+          onLogout?.();
+          navigate('/login', { replace: true });
+          return;
+        }
         setProfileError(
-          'Could not load your latest profile from the server. ' +
-          'Showing your session data — edits are still saved locally.'
+          err.message || 'Unable to connect to the server. Please try again.'
         );
       } finally {
         if (!cancelled) setProfileLoading(false);

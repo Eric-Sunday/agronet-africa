@@ -5,11 +5,9 @@
 // ⚠️  This is a Vite (React) project — environment variables are prefixed with
 //     VITE_  (not NEXT_PUBLIC_).
 //     Set VITE_API_URL in .env.local to override the default Render URL.
-//     Example: VITE_API_URL=https://agronet-backend.onrender.com
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Base URL for all backend requests.
- *  Reads VITE_API_URL at build time, falls back to the live Render service. */
+/** Base URL for all backend requests. */
 export const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') ||
   'https://agronet-africa-backend.onrender.com';
@@ -21,8 +19,38 @@ const UUID_RE =
 /** Returns true only if `id` is a proper UUID string. */
 export const isRealUUID = (id) => typeof id === 'string' && UUID_RE.test(id);
 
+// ── Token helpers ─────────────────────────────────────────────────────────────
+
+/** Persist auth session to localStorage */
+export function saveSession(token, user) {
+  localStorage.setItem('token', token);
+  localStorage.setItem('user', JSON.stringify(user));
+}
+
+/** Clear auth session from localStorage */
+export function clearSession() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+}
+
+/** Retrieve persisted user object (or null if missing/corrupt) */
+export function getPersistedUser() {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 // ── Core Fetch Wrapper ───────────────────────────────────────────────────────
+/**
+ * All backend requests go through here.
+ * Automatically attaches the stored JWT token as a Bearer header.
+ * On 401 responses it clears the session (token invalid / expired).
+ *
+ * @throws {Error} with `.status` property on non-2xx
+ */
 export async function apiFetch(url, options = {}) {
   const token = localStorage.getItem('token');
   const headers = {
@@ -34,57 +62,101 @@ export async function apiFetch(url, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  return fetch(url, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(url, { ...options, headers });
+  } catch (networkErr) {
+    const err = new Error('Unable to connect to the server. Please check your internet connection and try again.');
+    err.status = 0;
+    throw err;
+  }
+
+  // If the server returns 401, the session is invalid — clear it immediately
+  if (res.status === 401) {
+    clearSession();
+  }
+
+  return res;
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/auth/login
+ * Returns { token, user }
+ */
+export async function loginUser({ email, password }) {
+  const res = await apiFetch(`${API_BASE}/api/auth/login`, {
+    method: 'POST',
+    body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw Object.assign(
+      new Error(json.message || 'Invalid credentials. Please try again.'),
+      { status: res.status }
+    );
+  }
+
+  saveSession(json.token, json.user);
+  return { token: json.token, user: json.user };
+}
+
+/**
+ * POST /api/users (registration)
+ * Returns { token, user }
+ */
+export async function registerUser({ name, email, password, location, role }) {
+  const res = await apiFetch(`${API_BASE}/api/users`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      location: location.trim(),
+      role: role || 'farmer',
+    }),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw Object.assign(
+      new Error(json.message || 'Registration failed. Please try again.'),
+      { status: res.status }
+    );
+  }
+
+  saveSession(json.token, json.user);
+  return { token: json.token, user: json.user };
 }
 
 // ── User Profile ─────────────────────────────────────────────────────────────
 
 /**
- * Fetch a single user profile from the backend.
- *
- * @param {string} userId - UUID of the user (must pass UUID format check)
- * @returns {Promise<{
- *   id: string,
- *   name: string,
- *   email: string,
- *   phone: string|null,
- *   role: string,
- *   location: string|null,
- *   is_verified: boolean,
- *   created_at: string
- * }>}
- * @throws {Error} with a descriptive message on any non-2xx response or network failure
+ * GET /api/users/profile  (JWT-authenticated)
+ * Returns the live user object from the database.
  */
-export async function fetchUserProfile(userId) {
-  if (!isRealUUID(userId)) {
-    throw new Error(`fetchUserProfile: "${userId}" is not a valid UUID — skipping API call.`);
-  }
-
-  const url = `${API_BASE}/api/users/${userId}`;
-
-  const res = await apiFetch(url, {
+export async function fetchUserProfile() {
+  const res = await apiFetch(`${API_BASE}/api/users/profile`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(
-      body.message || `Backend responded with ${res.status} ${res.statusText}`
+    throw Object.assign(
+      new Error(body.message || `Failed to load profile (${res.status}).`),
+      { status: res.status }
     );
   }
 
   const json = await res.json();
-  // The backend wraps the record in { success: true, data: { ... } }
-  return json.data;
+  // Backend returns { success: true, user: { ... } }
+  return json.user;
 }
 
 /**
- * Formats a raw ISO date string (or any Date-parseable string) to a
- * human-friendly "Month YYYY" string, e.g. "July 2025".
- *
- * @param {string|null|undefined} isoString
- * @returns {string}
+ * Formats a raw ISO date string to a human-friendly "Month YYYY" string.
  */
 export function formatJoinDate(isoString) {
   if (!isoString) return '—';
@@ -101,12 +173,8 @@ export function formatJoinDate(isoString) {
 // ── Jobs ──────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch paginated job listings from the backend.
- * Backend shape: { success: true, data: Job[], pagination: { ... } }
- *
- * @param {{ page?: number, limit?: number, status?: string, location?: string }} opts
+ * GET /api/jobs
  * @returns {Promise<{ jobs: Job[], pagination: object }>}
- * @throws {Error} on non-2xx or network failure
  */
 export async function fetchJobs({ page = 1, limit = 100, status = 'active', location } = {}) {
   const params = new URLSearchParams({ page, limit, status });
@@ -114,61 +182,45 @@ export async function fetchJobs({ page = 1, limit = 100, status = 'active', loca
 
   const res = await apiFetch(`${API_BASE}/api/jobs?${params.toString()}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Backend responded with ${res.status} ${res.statusText}`);
+    throw new Error(body.message || `Failed to fetch jobs (${res.status}).`);
   }
 
   const json = await res.json();
-  // Backend returns: { success: true, data: [...], pagination: {...} }
   return { jobs: json.data ?? [], pagination: json.pagination ?? {} };
 }
 
 /**
- * Post a new job to the backend.
- * Backend shape: { success: true, data: Job }
- *
- * @param {object} jobPayload
- * @returns {Promise<Job>}
+ * POST /api/jobs
  */
 export async function postJob(jobPayload) {
   const res = await apiFetch(`${API_BASE}/api/jobs`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(jobPayload),
   });
 
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || `Backend responded with ${res.status}`);
+  if (!res.ok) throw new Error(json.message || `Failed to post job (${res.status}).`);
   return json.data;
 }
 
 /**
- * Fetch featured/homepage jobs (limited set for homepage display).
- * Backend shape: { success: true, data: Job[], pagination: { ... } }
- *
- * @param {{ limit?: number }} opts
- * @returns {Promise<{ jobs: Job[], pagination: object }>}
- * @throws {Error} on non-2xx or network failure
+ * GET /api/jobs/featured  (falls back to regular jobs if 404)
  */
 export async function fetchFeaturedJobs({ limit = 4 } = {}) {
   const params = new URLSearchParams({ status: 'active', limit, featured: 'true' });
 
   const res = await apiFetch(`${API_BASE}/api/jobs/featured?${params.toString()}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
-    // If the featured endpoint doesn't exist, fall back to regular jobs
-    if (res.status === 404) {
-      return fetchJobs({ limit, status: 'active' });
-    }
+    if (res.status === 404) return fetchJobs({ limit, status: 'active' });
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Backend responded with ${res.status} ${res.statusText}`);
+    throw new Error(body.message || `Failed to fetch featured jobs (${res.status}).`);
   }
 
   const json = await res.json();
@@ -177,116 +229,71 @@ export async function fetchFeaturedJobs({ limit = 4 } = {}) {
 
 // ── Platform Statistics ────────────────────────────────────────────────────────
 
-/**
- * Fetch platform-wide statistics (user counts, job counts, etc.).
- * Backend shape: { success: true, data: PlatformStats }
- *
- * @returns {Promise<{
- *   totalUsers: number,
- *   activeJobs: number,
- *   countriesCovered: number,
- *   communitiesReached: number,
- *   successfulPlacements: number,
- *   fieldEvangelists: number
- * }>}
- * @throws {Error} on non-2xx or network failure
- */
 export async function fetchPlatformStats() {
   const res = await apiFetch(`${API_BASE}/api/platform/stats`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Backend responded with ${res.status} ${res.statusText}`);
+    throw new Error(body.message || `Failed to fetch stats (${res.status}).`);
   }
 
   const json = await res.json();
-  // Return the data with safe defaults for missing fields
   return {
-    totalUsers: json.data?.totalUsers ?? 0,
-    activeJobs: json.data?.activeJobs ?? 0,
-    countriesCovered: json.data?.countriesCovered ?? 0,
-    communitiesReached: json.data?.communitiesReached ?? 0,
+    totalUsers:           json.data?.totalUsers           ?? 0,
+    activeJobs:           json.data?.activeJobs           ?? 0,
+    countriesCovered:     json.data?.countriesCovered     ?? 0,
+    communitiesReached:   json.data?.communitiesReached   ?? 0,
     successfulPlacements: json.data?.successfulPlacements ?? 0,
-    fieldEvangelists: json.data?.fieldEvangelists ?? 0,
+    fieldEvangelists:     json.data?.fieldEvangelists     ?? 0,
   };
 }
 
 // ── Experts / Agrilencer ───────────────────────────────────────────────────────
 
-/**
- * Fetch featured/homepage experts (limited set for homepage display).
- * Backend shape: { success: true, data: Expert[], pagination: { ... } }
- *
- * @param {{ limit?: number }} opts
- * @returns {Promise<{ experts: Expert[], pagination: object }>}
- * @throws {Error} on non-2xx or network failure
- */
 export async function fetchFeaturedExperts({ limit = 4 } = {}) {
   const params = new URLSearchParams({ limit, featured: 'true' });
 
   const res = await apiFetch(`${API_BASE}/api/experts/featured?${params.toString()}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
-    // If featured endpoint doesn't exist, try regular experts endpoint
-    if (res.status === 404) {
-      return fetchExperts({ limit });
-    }
+    if (res.status === 404) return fetchExperts({ limit });
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Backend responded with ${res.status} ${res.statusText}`);
+    throw new Error(body.message || `Failed to fetch featured experts (${res.status}).`);
   }
 
   const json = await res.json();
   return { experts: json.data ?? [], pagination: json.pagination ?? {} };
 }
 
-/**
- * Fetch all experts/specialists from the backend.
- * Backend shape: { success: true, data: Expert[], pagination: { ... } }
- *
- * @param {{ page?: number, limit?: number, specialty?: string }} opts
- * @returns {Promise<{ experts: Expert[], pagination: object }>}
- * @throws {Error} on non-2xx or network failure
- */
 export async function fetchExperts({ page = 1, limit = 100, specialty } = {}) {
   const params = new URLSearchParams({ page, limit });
   if (specialty) params.set('specialty', specialty);
 
   const res = await apiFetch(`${API_BASE}/api/experts?${params.toString()}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Backend responded with ${res.status} ${res.statusText}`);
+    throw new Error(body.message || `Failed to fetch experts (${res.status}).`);
   }
 
   const json = await res.json();
   return { experts: json.data ?? [], pagination: json.pagination ?? {} };
 }
 
-/**
- * Fetch expert specialties/categories from the backend.
- * Backend shape: { success: true, data: string[] }
- *
- * @returns {Promise<string[]>}
- * @throws {Error} on non-2xx or network failure
- */
 export async function fetchExpertSpecialties() {
   const res = await apiFetch(`${API_BASE}/api/experts/specialties`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `Backend responded with ${res.status} ${res.statusText}`);
+    throw new Error(body.message || `Failed to fetch specialties (${res.status}).`);
   }
 
   const json = await res.json();
