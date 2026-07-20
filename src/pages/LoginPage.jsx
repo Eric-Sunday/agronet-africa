@@ -34,51 +34,17 @@ export default function LoginPage({ onLogin }) {
 
     try {
       // ── Try the backend auth endpoint first ────────────────────────────────
-      // TODO: uncomment once POST /api/auth/login is implemented on the backend:
-      // const res  = await fetch(`${API_BASE}/api/auth/login`, {
-      //   method:  'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body:    JSON.stringify({ email: email.toLowerCase().trim(), password }),
-      // });
-      // const json = await res.json();
-      // if (!res.ok) throw new Error(json.message || 'Invalid credentials.');
-      // onLogin(json.data);
-      // navigate('/profile');
-      // ──────────────────────────────────────────────────────────────────────
-
-      // ── Interim: look up the user by email from the /api/users listing ───
-      // This will work for real registered users once the backend has them.
-      const searchRes = await fetch(
-        `${API_BASE}/api/users?email=${encodeURIComponent(email.toLowerCase().trim())}`,
-        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
-      );
-
-      // If the search endpoint doesn't exist yet, fall back gracefully
-      if (searchRes.status === 404) {
-        throw new Error('Sign-in service is not yet available. Please register a new account.');
-      }
-
-      if (!searchRes.ok) {
-        throw new Error('Could not connect to the authentication server. Please try again.');
-      }
-
-      const searchJson = await searchRes.json();
-      // Backend returns { success, data: [...] }
-      const users = searchJson.data ?? [];
-      const matched = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase().trim()
-      );
-
-      if (!matched) {
-        throw new Error('No account found with that email address. Please register first.');
-      }
-
-      // Password verification is backend-enforced — without a proper auth
-      // endpoint we can only confirm the account exists. Accept any non-empty
-      // password for now and redirect.
+      const res  = await fetch(`${API_BASE}/api/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: email.toLowerCase().trim(), password }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Invalid credentials.');
+      
       setSuccess(true);
       setTimeout(() => {
-        onLogin({ id: matched.id, name: matched.name, email: matched.email, location: matched.location, role: matched.role });
+        onLogin(json.data);
         navigate('/profile');
       }, 900);
 
