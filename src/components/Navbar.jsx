@@ -72,8 +72,8 @@ export default function Navbar({ currentUser, onLogout }) {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-mint-400 rounded-full animate-pulse-gentle" />
             </div>
             <div className="hidden sm:block">
-              <span className="text-xl font-display font-bold text-forest-900">AgroNet</span>
-              <span className="text-xl font-display font-bold text-agro-500 ml-1">Africa</span>
+              <span className="text-xl font-display font-bold text-forest-900">Agro Africa</span>
+              <span className="text-xl font-display font-bold text-agro-500 ml-1">Net</span>
             </div>
           </Link>
 

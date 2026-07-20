@@ -1,13 +1,16 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Mic, MicOff, Square, Play, Pause, Users, MessageCircle,
   Heart, Share2, MoreHorizontal, MapPin, Send, BookOpen,
   Award, CheckCircle, Leaf, ChevronRight, Volume2, Clock,
-  Sparkles, Radio, Waves
+  Sparkles, Radio, Waves, WifiOff
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+
+// ===== Backend API URL =====
+const API_URL = 'http://localhost:5000';
 
 // ===== SEED POSTS =====
 const SEED_POSTS = [
@@ -306,40 +309,91 @@ function CreatePostForm({ onAddPost }) {
   const [text, setText] = useState('');
   const [showRecorder, setShowRecorder] = useState(false);
 
-  const handleTextPost = () => {
+  const handleTextPost = async () => {
     if (!text.trim()) return;
-    onAddPost({
-      id: `post_${Date.now()}`,
-      author: 'Kwame Asante',
-      location: 'Accra, Ghana',
-      avatar: 'KA',
-      avatarColor: 'from-agro-500 to-agro-700',
-      timestamp: 'Just now',
-      text: text.trim(),
-      type: 'text',
-      likes: 0,
-      replies: 0,
-      liked: false,
-    });
-    setText('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/kilombo`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          author:      'Kwame Asante',
+          location:    'Accra, Ghana',
+          avatar:      'KA',
+          avatarColor: 'from-agro-500 to-agro-700',
+          text:        text.trim(),
+          type:        'text',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Failed to post');
+
+      // Add the saved post (with real DB id) to the feed
+      onAddPost(data.post);
+      setText('');
+    } catch (err) {
+      console.error('Error posting to Kilombo:', err);
+      // Fallback: still show locally so the user isn't confused
+      onAddPost({
+        id:          `post_${Date.now()}`,
+        author:      'Kwame Asante',
+        location:    'Accra, Ghana',
+        avatar:      'KA',
+        avatarColor: 'from-agro-500 to-agro-700',
+        timestamp:   'Just now',
+        text:        text.trim(),
+        type:        'text',
+        likes:       0,
+        replies:     0,
+        liked:       false,
+      });
+      setText('');
+    }
   };
 
-  const handleAudioPost = (duration) => {
-    onAddPost({
-      id: `post_${Date.now()}`,
-      author: 'Kwame Asante',
-      location: 'Accra, Ghana',
-      avatar: 'KA',
-      avatarColor: 'from-agro-500 to-agro-700',
-      timestamp: 'Just now',
-      text: 'Shared an audio note from the field ðŸŽ™ï¸',
-      type: 'audio',
-      audioDuration: duration,
-      audioLabel: 'My field recording',
-      likes: 0,
-      replies: 0,
-      liked: false,
-    });
+  const handleAudioPost = async (duration) => {
+    try {
+      const response = await fetch(`${API_URL}/api/kilombo`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          author:        'Kwame Asante',
+          location:      'Accra, Ghana',
+          avatar:        'KA',
+          avatarColor:   'from-agro-500 to-agro-700',
+          text:          'Shared an audio note from the field 🎙️',
+          type:          'audio',
+          audioDuration: duration,
+          audioLabel:    'My field recording',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Failed to post audio');
+
+      onAddPost(data.post);
+    } catch (err) {
+      console.error('Error posting audio to Kilombo:', err);
+      // Fallback: still show locally
+      onAddPost({
+        id:            `post_${Date.now()}`,
+        author:        'Kwame Asante',
+        location:      'Accra, Ghana',
+        avatar:        'KA',
+        avatarColor:   'from-agro-500 to-agro-700',
+        timestamp:     'Just now',
+        text:          'Shared an audio note from the field 🎙️',
+        type:          'audio',
+        audioDuration: duration,
+        audioLabel:    'My field recording',
+        likes:         0,
+        replies:       0,
+        liked:         false,
+      });
+    }
     setShowRecorder(false);
   };
 
@@ -519,10 +573,33 @@ function MicroLearningSidebar({ onUnlockGAP, gapUnlocked }) {
 
 // ===== MAIN KILOMBO PAGE =====
 export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked, currentUser, onLogout }) {
-  const [posts, setPosts] = useState(SEED_POSTS);
+  const [posts, setPosts]         = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError]   = useState(null);
+
+  // Load all forum posts from the backend on page open
+  useEffect(() => {
+    async function loadPosts() {
+      try {
+        const res  = await fetch(`${API_URL}/api/kilombo`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load posts');
+        setPosts(data.posts);
+        setApiError(null);
+      } catch (err) {
+        console.error('Failed to fetch Kilombo posts:', err);
+        setApiError('Backend not connected. Showing local data only.');
+        // Fallback to seed data so the page is not blank when offline
+        setPosts(SEED_POSTS);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadPosts();
+  }, []);
 
   const handleAddPost = (newPost) => {
-    setPosts([newPost, ...posts]);
+    setPosts((prev) => [newPost, ...prev]);
   };
 
   return (
@@ -542,7 +619,110 @@ export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked, curren
               <span className="text-sm font-medium text-agro-100">Live Community</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-4">
-              The Kilombo ðŸŒ
+              The Kilombo 🌍
+            </h1>
+            <p className="text-lg text-agro-200 leading-relaxed max-w-xl">
+              A gathering place for African farmers to share knowledge, voice notes, and field updates.
+              Your village, your voice.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section className="py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          {/* API error banner */}
+          {apiError && (
+            <div className="flex items-center gap-3 p-4 mb-6 bg-amber-50 border-2 border-amber-200 rounded-xl text-amber-800">
+              <WifiOff className="w-5 h-5 flex-shrink-0" />
+              <p className="text-sm font-medium">{apiError}</p>
+            </div>
+          )}
+
+          <div className="grid lg:grid-cols-3 gap-8">
+
+            {/* Feed Column */}
+            <div className="lg:col-span-2 space-y-5">
+              {/* Create Post */}
+              <CreatePostForm onAddPost={handleAddPost} />
+
+              {/* Post Feed */}
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <div className="w-10 h-10 border-4 border-agro-200 border-t-agro-600 rounded-full animate-spin mb-3" />
+                  <p className="text-sm font-medium">Loading community posts...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <div>
+              <MicroLearningSidebar
+                onUnlockGAP={onUnlockGAPBadge}
+                gapUnlocked={gapBadgeUnlocked}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
+
+
+  // Load all forum posts from the backend on page open
+  useEffect(() => {
+    async function loadPosts() {
+      try {
+        const res  = await fetch(`${API_URL}/api/kilombo`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load posts');
+        setPosts(data.posts);
+        setApiError(null);
+      } catch (err) {
+        console.error('Failed to fetch Kilombo posts:', err);
+        setApiError('Backend not connected. Showing local data only.');
+        // If the backend is offline, fall back to seed data so the page isn't blank
+        setPosts(SEED_POSTS);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadPosts();
+  }, []);
+
+  const handleAddPost = (newPost) => {
+    setPosts((prev) => [newPost, ...prev]);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50/50">
+      <Navbar currentUser={currentUser} onLogout={onLogout} />
+
+      {/* Page Header */}
+      <section className="relative pt-28 pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-agro-950 via-agro-800 to-agro-600" />
+        <div className="absolute inset-0 bg-dots opacity-10" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-5 border border-white/20">
+              <Radio className="w-4 h-4 text-agro-300 animate-pulse" />
+              <span className="text-sm font-medium text-agro-100">Live Community</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-4">
+              The Kilombo 🌍
             </h1>
             <p className="text-lg text-agro-200 leading-relaxed max-w-xl">
               A gathering place for African farmers to share knowledge, voice notes, and field updates. 
@@ -555,6 +735,15 @@ export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked, curren
       {/* Main Content */}
       <section className="py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          {/* API error banner */}
+          {apiError && (
+            <div className="flex items-center gap-3 p-4 mb-6 bg-amber-50 border-2 border-amber-200 rounded-xl text-amber-800">
+              <WifiOff className="w-5 h-5 flex-shrink-0" />
+              <p className="text-sm font-medium">{apiError}</p>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-3 gap-8">
 
             {/* Feed Column */}
@@ -563,11 +752,18 @@ export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked, curren
               <CreatePostForm onAddPost={handleAddPost} />
 
               {/* Post Feed */}
-              <div className="space-y-4">
-                {posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
-              </div>
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <div className="w-10 h-10 border-4 border-agro-200 border-t-agro-600 rounded-full animate-spin mb-3" />
+                  <p className="text-sm font-medium">Loading community posts...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -578,6 +774,12 @@ export default function KilomboPage({ onUnlockGAPBadge, gapBadgeUnlocked, curren
               />
             </div>
           </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );          </div>
         </div>
       </section>
 

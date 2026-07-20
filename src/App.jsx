@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { MOCK_JOBS } from './data/mockDatabase';
-import { SEED_CONTRACTS } from './data/mockData';
 import HomePage from './pages/HomePage';
 import JobBoardPage from './pages/JobBoardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -12,22 +10,18 @@ import ExpertDirectoryPage from './pages/expert/ExpertDirectoryPage';
 import EscrowDashboardPage from './pages/expert/EscrowDashboardPage';
 
 export default function App() {
-  // â”€â”€ Auth state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Auth state ──────────────────────────────────────────────────────────────────
   const [currentUser, setCurrentUser] = useState(null);
 
   const handleLogin  = (user) => setCurrentUser(user);
   const handleLogout = ()     => setCurrentUser(null);
-
-  // ── Jobs state ──────────────────────────────────────────────────────────────────
-  const [jobs, setJobs] = useState([...MOCK_JOBS]);
-  const handleAddJob = (newJob) => setJobs((prev) => [newJob, ...prev]);
 
   // ── GAP badge state (The Kilombo → Profile) ─────────────────────────────────────
   const [gapBadgeUnlocked, setGapBadgeUnlocked] = useState(false);
   const handleUnlockGAPBadge = () => setGapBadgeUnlocked(true);
 
   // ── Agrilencer: Escrow Contracts state ──────────────────────────────────────────
-  const [contracts, setContracts] = useState([...SEED_CONTRACTS]);
+  const [contracts, setContracts] = useState([]);
   const handleAddContract = (newContract) =>
     setContracts((prev) => [newContract, ...prev]);
 
@@ -37,7 +31,7 @@ export default function App() {
         <Route path="/"         element={<HomePage currentUser={currentUser} onLogout={handleLogout} />} />
         <Route path="/login"    element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/register" element={<RegisterPage onLogin={handleLogin} />} />
-        <Route path="/jobs"     element={<JobBoardPage jobs={jobs} onAddJob={handleAddJob} currentUser={currentUser} onLogout={handleLogout} />} />
+        <Route path="/jobs"     element={<JobBoardPage currentUser={currentUser} onLogout={handleLogout} />} />
         <Route path="/profile"  element={<ProfilePage gapBadgeUnlocked={gapBadgeUnlocked} currentUser={currentUser} onLogout={handleLogout} />} />
         <Route path="/kilombo"  element={
           <KilomboPage

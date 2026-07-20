@@ -42,7 +42,7 @@ export default function Footer() {
                 <Leaf className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-display font-bold">
-                AgroNet<span className="text-agro-400 ml-1">Africa</span>
+                Agro Africa<span className="text-agro-400 ml-1">Net</span>
               </span>
             </Link>
             <p className="text-sm text-agro-300/70 leading-relaxed">
@@ -75,7 +75,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="py-6 border-t border-agro-800/60 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-agro-500">
-            © {new Date().getFullYear()} AgroNet Africa. All rights reserved.
+            © {new Date().getFullYear()} Agro Africa Net. All rights reserved.
           </p>
           <p className="text-xs text-agro-600">
             🌱 Growing Africa's agricultural future, one connection at a time.

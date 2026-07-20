@@ -1,13 +1,14 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search, MapPin, DollarSign, Clock, Tag, Filter,
   Plus, X, ChevronRight, Briefcase, Building2,
   CheckCircle, Sparkles, ArrowRight, ChevronDown,
-  Leaf, AlertCircle
+  Leaf, AlertCircle, WifiOff
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { API_BASE } from '../lib/api';
 
 // ===== Intersection Observer Hook =====
 function useInView(options = {}) {
@@ -184,7 +185,7 @@ function PostJobForm({ onSubmit, onCancel }) {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     setErrors(newErrors);
@@ -192,21 +193,30 @@ function PostJobForm({ onSubmit, onCancel }) {
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
 
-      // Simulate a brief save delay
-      setTimeout(() => {
-        const newJob = {
-          id: `job_${Date.now()}`,
-          title: form.title.trim(),
-          company: form.company.trim(),
-          location: form.location.trim(),
-          salary: form.salary.trim(),
-          type: form.type,
-          tags: form.skills,
-          postedBy: 'usr_001',
-          postedAt: new Date().toISOString().split('T')[0],
-        };
+      try {
+        // Send the new job to the backend API for permanent storage in SQLite
+        const response = await fetch(`${API_BASE}/api/jobs`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            title:    form.title.trim(),
+            company:  form.company.trim(),
+            location: form.location.trim(),
+            salary:   form.salary.trim(),
+            type:     form.type,
+            tags:     form.skills,
+            postedAt: new Date().toISOString().split('T')[0],
+          }),
+        });
 
-        onSubmit(newJob);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to post job');
+        }
+
+        // Backend returns { success, data: { ...job } }
+        onSubmit(data.data);
         setIsSubmitting(false);
         setSubmitted(true);
 
@@ -216,7 +226,12 @@ function PostJobForm({ onSubmit, onCancel }) {
           setForm({ title: '', company: '', location: '', salary: '', type: 'Full-time', skills: [] });
           onCancel();
         }, 2000);
-      }, 800);
+
+      } catch (error) {
+        console.error('Error posting job:', error);
+        setIsSubmitting(false);
+        setErrors({ submit: error.message || 'Could not connect to the server. Check your network connection.' });
+      }
     }
   };
 
@@ -230,7 +245,7 @@ function PostJobForm({ onSubmit, onCancel }) {
           Job Posted Successfully!
         </h3>
         <p className="text-gray-600">
-          Your listing is now live on the AgroNet Africa job board.
+          Your listing is now live on the Agro Africa Net job board.
         </p>
       </div>
     );
@@ -470,17 +485,43 @@ function PostJobForm({ onSubmit, onCancel }) {
 
 
 // ===== MAIN JOB BOARD PAGE =====
-export default function JobBoardPage({ jobs, onAddJob, currentUser, onLogout }) {
-  const [showForm, setShowForm] = useState(false);
+export default function JobBoardPage({ currentUser, onLogout }) {
+  const [showForm, setShowForm]     = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
+  const [jobs, setJobs]             = useState([]);
+  const [isLoading, setIsLoading]   = useState(true);
+  const [apiError, setApiError]     = useState(null);
+
+  // Load all jobs from the backend when the page first opens
+  useEffect(() => {
+    async function loadJobs() {
+      try {
+        const res  = await fetch(`${API_BASE}/api/jobs?limit=100&status=active`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to load jobs');
+        // Backend returns { success: true, data: [...], pagination: {...} }
+        setJobs(Array.isArray(data.data) ? data.data : []);
+        setApiError(null);
+      } catch (err) {
+        console.error('Failed to fetch jobs:', err);
+        setApiError('Could not connect to the backend. Make sure the server is running and VITE_API_URL is set correctly.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadJobs();
+  }, []);
+
+  // Add a newly posted job to the top of the list
+  const handleAddJob = (newJob) => setJobs((prev) => [newJob, ...prev]);
 
   const filteredJobs = jobs.filter((job) => {
     const matchSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.tags.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase()));
+      (Array.isArray(job.tags) && job.tags.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase())));
     const matchType = filterType === 'All' || job.type === filterType;
     return matchSearch && matchType;
   });
@@ -572,12 +613,22 @@ export default function JobBoardPage({ jobs, onAddJob, currentUser, onLogout }) 
         </div>
       </section>
 
+      {/* API error banner */}
+      {apiError && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-2">
+          <div className="flex items-center gap-3 p-4 bg-amber-50 border-2 border-amber-200 rounded-xl text-amber-800">
+            <WifiOff className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-medium">{apiError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Post Job Form (collapsible) */}
       {showForm && (
         <section className="pb-10 animate-fade-in-up">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <PostJobForm
-              onSubmit={(newJob) => onAddJob(newJob)}
+              onSubmit={handleAddJob}
               onCancel={() => setShowForm(false)}
             />
           </div>
@@ -587,39 +638,48 @@ export default function JobBoardPage({ jobs, onAddJob, currentUser, onLogout }) 
       {/* Job Listings */}
       <section className="pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Results count */}
-          <p className="text-sm text-gray-500 mb-6">
-            Showing <span className="font-semibold text-agro-700">{filteredJobs.length}</span>{' '}
-            {filteredJobs.length === 1 ? 'position' : 'positions'}
-            {searchTerm && (
-              <span> for "<span className="font-medium text-gray-700">{searchTerm}</span>"</span>
-            )}
-          </p>
-
-          {filteredJobs.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredJobs.map((job, index) => (
-                <JobCard key={job.id} job={job} index={index} />
-              ))}
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+              <div className="w-12 h-12 border-4 border-agro-200 border-t-agro-600 rounded-full animate-spin mb-4" />
+              <p className="text-sm font-medium">Loading jobs from database...</p>
             </div>
           ) : (
-            <div className="text-center py-20">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Search className="w-10 h-10 text-gray-300" />
-              </div>
-              <h3 className="text-xl font-display font-bold text-gray-700 mb-2">
-                No jobs found
-              </h3>
-              <p className="text-gray-500 mb-6">
-                Try adjusting your search or filters, or post a new position.
+            <>
+              {/* Results count */}
+              <p className="text-sm text-gray-500 mb-6">
+                Showing <span className="font-semibold text-agro-700">{filteredJobs.length}</span>{' '}
+                {filteredJobs.length === 1 ? 'position' : 'positions'}
+                {searchTerm && (
+                  <span> for "<span className="font-medium text-gray-700">{searchTerm}</span>"</span>
+                )}
               </p>
-              <button
-                onClick={() => { setSearchTerm(''); setFilterType('All'); }}
-                className="btn-secondary text-sm"
-              >
-                Clear Filters
-              </button>
-            </div>
+
+          {filteredJobs.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredJobs.map((job, index) => (
+                  <JobCard key={job.id} job={job} index={index} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-10 h-10 text-gray-300" />
+                </div>
+                <h3 className="text-xl font-display font-bold text-gray-700 mb-2">
+                  No jobs found
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  Try adjusting your search or filters, or post a new position.
+                </p>
+                <button
+                  onClick={() => { setSearchTerm(''); setFilterType('All'); }}
+                  className="btn-secondary text-sm"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+            </>
           )}
         </div>
       </section>

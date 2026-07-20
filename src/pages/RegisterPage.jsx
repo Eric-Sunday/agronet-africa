@@ -135,7 +135,7 @@ export default function RegisterPage({ onLogin }) {
                   {step === 1 ? 'Choose your role' : 'Create your account'}
                 </h1>
                 <p className="text-sm text-agro-100 mt-1">
-                  {step === 1 ? 'Select how you\'ll use AgroNet Africa' : 'Fill in your details to get started'}
+                  {step === 1 ? 'Select how you\'ll use Agro Africa Net' : 'Fill in your details to get started'}
                 </p>
               </div>
               {/* Step indicator */}
@@ -264,7 +264,7 @@ export default function RegisterPage({ onLogin }) {
           </div>
         </div>
 
-        <p className="text-center text-xs text-agro-300 mt-6">© 2025 AgroNet Africa · Demo Platform</p>
+        <p className="text-center text-xs text-agro-300 mt-6">© 2025 Agro Africa Net · Demo Platform</p>
       </div>
     </div>
   );

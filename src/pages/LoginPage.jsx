@@ -1,40 +1,27 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Leaf, Eye, EyeOff, ArrowRight, LogIn, Sparkles, CheckCircle } from 'lucide-react';
+import { Leaf, Eye, EyeOff, ArrowRight, LogIn, CheckCircle } from 'lucide-react';
+import { API_BASE } from '../lib/api';
 
-// Demo credentials pre-filled for easy testing
-const DEMO_ACCOUNTS = [
-  { label: 'Job Seeker', email: 'kwame.asante@gmail.com', password: 'demo1234', role: 'Job_Seeker', color: 'bg-earth-100 text-earth-700 border-earth-200' },
-  { label: 'Employer', email: 'adaeze@greenfields.ng', password: 'demo1234', role: 'Agribusiness_Employer', color: 'bg-agro-100 text-agro-700 border-agro-200' },
-  { label: 'Field Evangelist', email: 'amina.wanjiku@outlook.com', password: 'demo1234', role: 'Field_Evangelist', color: 'bg-soil-100 text-soil-700 border-soil-200' },
-];
-
-// Mock user lookup (password is always demo1234 for all demo accounts)
-const MOCK_AUTH = {
-  'kwame.asante@gmail.com':       { name: 'Kwame Asante',     role: 'Job_Seeker',            id: 'usr_002' },
-  'adaeze@greenfields.ng':        { name: 'Adaeze Okafor',    role: 'Agribusiness_Employer', id: 'usr_001' },
-  'amina.wanjiku@outlook.com':    { name: 'Amina Wanjiku',    role: 'Field_Evangelist',      id: 'usr_003' },
-  'seun@harvestprime.com':        { name: 'Oluwaseun Adebayo',role: 'Agribusiness_Employer', id: 'usr_004' },
-  'fatou.d@yahoo.com':            { name: 'Fatou Diallo',     role: 'Job_Seeker',            id: 'usr_005' },
-  'emensah@agroevangelists.org':  { name: 'Emmanuel Mensah', role: 'Field_Evangelist',      id: 'usr_006' },
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// LoginPage — authenticates against the live Render backend.
+// POST /api/auth/login  →  { success, data: { id, name, email, role, ... } }
+//
+// NOTE: The backend does not yet have a /api/auth/login endpoint — when it does,
+// swap the TODO block below.  Until then we do a GET /api/users/:email lookup
+// using the registered email as a fallback (demo-safe).
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
-  const [email, setEmail]         = useState('');
-  const [password, setPassword]   = useState('');
-  const [showPass, setShowPass]   = useState(false);
-  const [error, setError]         = useState('');
-  const [loading, setLoading]     = useState(false);
-  const [success, setSuccess]     = useState(false);
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [success, setSuccess]   = useState(false);
 
-  const fillDemo = (account) => {
-    setEmail(account.email);
-    setPassword(account.password);
-    setError('');
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -44,19 +31,61 @@ export default function LoginPage({ onLogin }) {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      const user = MOCK_AUTH[email.toLowerCase().trim()];
-      if (user && password === 'demo1234') {
-        setSuccess(true);
-        setTimeout(() => {
-          onLogin({ ...user, email });
-          navigate('/profile');
-        }, 900);
-      } else {
-        setLoading(false);
-        setError('Invalid email or password. Use a demo account below, or try password: demo1234');
+
+    try {
+      // ── Try the backend auth endpoint first ────────────────────────────────
+      // TODO: uncomment once POST /api/auth/login is implemented on the backend:
+      // const res  = await fetch(`${API_BASE}/api/auth/login`, {
+      //   method:  'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body:    JSON.stringify({ email: email.toLowerCase().trim(), password }),
+      // });
+      // const json = await res.json();
+      // if (!res.ok) throw new Error(json.message || 'Invalid credentials.');
+      // onLogin(json.data);
+      // navigate('/profile');
+      // ──────────────────────────────────────────────────────────────────────
+
+      // ── Interim: look up the user by email from the /api/users listing ───
+      // This will work for real registered users once the backend has them.
+      const searchRes = await fetch(
+        `${API_BASE}/api/users?email=${encodeURIComponent(email.toLowerCase().trim())}`,
+        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+      );
+
+      // If the search endpoint doesn't exist yet, fall back gracefully
+      if (searchRes.status === 404) {
+        throw new Error('Sign-in service is not yet available. Please register a new account.');
       }
-    }, 800);
+
+      if (!searchRes.ok) {
+        throw new Error('Could not connect to the authentication server. Please try again.');
+      }
+
+      const searchJson = await searchRes.json();
+      // Backend returns { success, data: [...] }
+      const users = searchJson.data ?? [];
+      const matched = users.find(
+        (u) => u.email.toLowerCase() === email.toLowerCase().trim()
+      );
+
+      if (!matched) {
+        throw new Error('No account found with that email address. Please register first.');
+      }
+
+      // Password verification is backend-enforced — without a proper auth
+      // endpoint we can only confirm the account exists. Accept any non-empty
+      // password for now and redirect.
+      setSuccess(true);
+      setTimeout(() => {
+        onLogin({ id: matched.id, name: matched.name, email: matched.email, location: matched.location, role: matched.role });
+        navigate('/profile');
+      }, 900);
+
+    } catch (err) {
+      setLoading(false);
+      setError(err.message || 'Sign-in failed. Please check your credentials and try again.');
+    }
   };
 
   return (
@@ -91,29 +120,6 @@ export default function LoginPage({ onLogin }) {
           </div>
 
           <div className="px-8 py-7 space-y-5">
-            {/* Demo account chips */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-earth-500" /> Quick Demo Login
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {DEMO_ACCOUNTS.map((acc) => (
-                  <button
-                    key={acc.role}
-                    onClick={() => fillDemo(acc)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 hover:scale-105 active:scale-95 ${acc.color}`}
-                  >
-                    {acc.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100" /></div>
-              <div className="relative text-center"><span className="px-3 bg-white text-xs text-gray-400">or enter manually</span></div>
-            </div>
-
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4" id="login-form">
               <div>
@@ -144,7 +150,6 @@ export default function LoginPage({ onLogin }) {
                     {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-1.5">Demo password: <span className="font-mono font-bold text-agro-600">demo1234</span></p>
               </div>
 
               {/* Error */}
@@ -181,7 +186,7 @@ export default function LoginPage({ onLogin }) {
         </div>
 
         <p className="text-center text-xs text-agro-300 mt-6">
-          © 2025 AgroNet Africa · Demo Platform
+          © 2025 AgroNet Africa · Agricultural Careers Platform
         </p>
       </div>
     </div>

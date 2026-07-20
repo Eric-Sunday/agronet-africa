@@ -1,15 +1,17 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   User, Mail, MapPin, Calendar, Award, Plus, X, Edit3,
   CheckCircle, Star, Briefcase, BookOpen, Shield,
   FileText, ExternalLink, Sparkles, GraduationCap,
   Save, Camera, Rocket, ArrowRight, Target, Zap,
-  ChevronRight, Building2, DollarSign, Clock, Tag
+  ChevronRight, Building2, DollarSign, Clock, Tag,
+  AlertCircle, Loader2
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { mapDreamToCareer } from '../data/careerMapper';
+import { fetchUserProfile, formatJoinDate, isRealUUID } from '../lib/api';
 
 // ===== Intersection Observer Hook =====
 function useInView(options = {}) {
@@ -511,26 +513,44 @@ function DreamToRoleMapper() {
   );
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Builds the initial profile snapshot from whatever the auth layer already knows.
+ * This prevents any flash of the old Kwame Asante placeholder.
+ */
+function buildInitialProfile(currentUser) {
+  return {
+    id:                    currentUser?.id       || '',
+    name:                  currentUser?.name     || '',
+    email:                 currentUser?.email    || '',
+    phone:                 currentUser?.phone    || '',
+    location:              currentUser?.location || '',
+    role:                  currentUser?.role     || '',
+    isVerified:            currentUser?.is_verified || currentUser?.isVerified || false,
+    bio:                   '',
+    skills:                [],
+    joinedAt:              '',
+    applicationsSubmitted: 0,
+    profileViews:          0,
+    shortlisted:           0,
+  };
+}
+
 // ===== MAIN PROFILE PAGE =====
 export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onLogout }) {
-  // Editable profile state
-  const [profile, setProfile] = useState({
-    name: 'Kwame Asante',
-    email: 'kwame.asante@gmail.com',
-    location: 'Accra, Ghana',
-    bio: 'Passionate agricultural scientist with 5+ years of experience in sustainable crop production across West Africa. Specialized in soil analysis, precision irrigation, and climate-adaptive farming techniques. Currently seeking opportunities to apply data-driven agronomy at scale.',
-    skills: ['Crop Science', 'Irrigation', 'Soil Analysis', 'Precision Farming', 'Data Analytics'],
-    joinedAt: 'June 2025',
-    applicationsSubmitted: 5,
-    profileViews: 142,
-    shortlisted: 3,
-  });
+  // ── Profile state — seeded immediately from currentUser (no Kwame flash) ──
+  const [profile, setProfile] = useState(() => buildInitialProfile(currentUser));
+
+  // ── API fetch state ────────────────────────────────────────────────────────
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError,   setProfileError]   = useState(null);
 
   const [certificates, setCertificates] = useState([
     {
       id: 'cert_001',
       title: 'Advanced Soil Pathology',
-      issuer: 'AgroNet Africa Academy',
+      issuer: 'Agro Africa Net Academy',
       status: 'Completed',
       date: 'July 2025',
     },
@@ -544,7 +564,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
     {
       id: 'cert_003',
       title: 'Greenhouse Agronomy & Climate Control',
-      issuer: 'AgroNet Africa Academy',
+      issuer: 'Agro Africa Net Academy',
       status: 'In Progress',
       date: 'Expected Sept 2025',
     },
@@ -569,6 +589,76 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
   const [showCertForm, setShowCertForm] = useState(false);
   const [newCert, setNewCert] = useState({ title: '', issuer: '', status: 'Completed', date: '' });
   const [skillInput, setSkillInput] = useState('');
+
+  // ── Fetch live profile from backend whenever currentUser changes ──────────
+  useEffect(() => {
+    // If there's no logged-in user, reset to blank and bail
+    if (!currentUser) {
+      setProfile(buildInitialProfile(null));
+      setProfileError(null);
+      return;
+    }
+
+    // Immediately seed from the auth context so the page renders something
+    // meaningful even before the API responds (or if it fails).
+    const authSeeded = buildInitialProfile(currentUser);
+    setProfile(authSeeded);
+    setEditForm(authSeeded);
+
+    // Only hit the backend if the user has a real UUID (registered users).
+    // Demo mock IDs (usr_002, etc.) will skip the fetch and use the auth seed.
+    if (!isRealUUID(currentUser.id)) {
+      setProfileError(
+        'Live profile sync is available for registered accounts. ' +
+        'Demo accounts display data from your login session.'
+      );
+      return;
+    }
+
+    let cancelled = false; // prevent state updates on unmounted component
+
+    const loadProfile = async () => {
+      setProfileLoading(true);
+      setProfileError(null);
+
+      try {
+        const data = await fetchUserProfile(currentUser.id);
+
+        if (cancelled) return;
+
+        // Map backend DB fields → local profile shape
+        const merged = {
+          ...authSeeded,
+          id:         data.id         || authSeeded.id,
+          name:       data.name       || authSeeded.name,
+          email:      data.email      || authSeeded.email,
+          phone:      data.phone      || authSeeded.phone,
+          location:   data.location   || authSeeded.location,
+          role:       data.role       || authSeeded.role,
+          isVerified: data.is_verified !== undefined ? data.is_verified : authSeeded.isVerified,
+          joinedAt:   formatJoinDate(data.created_at),
+          // bio / skills are not stored in the backend yet — keep auth seed
+        };
+
+        setProfile(merged);
+        setEditForm(merged);
+      } catch (err) {
+        if (cancelled) return;
+        // Graceful fallback — profile already seeded from auth context above
+        console.warn('[ProfilePage] Backend fetch failed, using auth-seeded data:', err.message);
+        setProfileError(
+          'Could not load your latest profile from the server. ' +
+          'Showing your session data — edits are still saved locally.'
+        );
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    };
+
+    loadProfile();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   // Handle profile save
   const handleSaveProfile = () => {
@@ -620,6 +710,14 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
   return (
     <div className="min-h-screen bg-gray-50/50">
       <Navbar currentUser={currentUser} onLogout={onLogout} />
+
+      {/* ── Loading overlay (shown while fetching from backend) ─────────── */}
+      {profileLoading && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-2.5 bg-white border border-agro-200 rounded-full shadow-lg shadow-agro-900/10 text-sm font-medium text-agro-700 animate-fade-in-up">
+          <Loader2 className="w-4 h-4 animate-spin text-agro-500" />
+          Loading your profile…
+        </div>
+      )}
 
       {/* Profile Header */}
       <section className="relative pt-24 pb-0 overflow-hidden">
@@ -748,7 +846,15 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
                 )}
               </div>
 
-              {/* Edit form Ã¢â‚¬â€ Name / Location / Email */}
+              {/* ── Soft API error notice (shown below bio, non-blocking) ── */}
+              {profileError && !profileLoading && (
+                <div className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" />
+                  <span>{profileError}</span>
+                </div>
+              )}
+
+              {/* Edit form — Name / Location / Email */}
               {isEditing && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm animate-fade-in-up space-y-5">
                   <h2 className="text-lg font-display font-bold text-gray-900 mb-2 flex items-center gap-2">
@@ -879,7 +985,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
                           type="text"
                           value={newCert.issuer}
                           onChange={(e) => setNewCert({ ...newCert, issuer: e.target.value })}
-                          placeholder="e.g. AgroNet Africa Academy"
+                          placeholder="e.g. Agro Africa Net Academy"
                           className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:border-agro-400 focus:ring-4 focus:ring-agro-100 outline-none transition-all"
                           required
                         />
@@ -935,8 +1041,8 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
                         <p className="text-white font-display font-bold">GAP Certified</p>
                         <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-semibold rounded-full">New!</span>
                       </div>
-                      <p className="text-xs text-agro-100 mt-0.5">Good Agricultural Practices Â· AgroNet Africa Academy</p>
-                      <p className="text-xs text-agro-200 mt-0.5">Unlocked via Micro-Learning Â· Just now</p>
+                      <p className="text-xs text-agro-100 mt-0.5">Good Agricultural Practices · Agro Africa Net Academy</p>
+                      <p className="text-xs text-agro-200 mt-0.5">Unlocked via Micro-Learning · Just now</p>
                     </div>
                     <CheckCircle className="relative w-6 h-6 text-white flex-shrink-0" />
                   </div>
@@ -991,9 +1097,18 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Status</p>
-                      <p className="text-sm font-medium text-agro-700 flex items-center gap-1">
-                        <CheckCircle className="w-4 h-4" />
-                        Verified Job Seeker
+                      <p className="text-sm font-medium flex items-center gap-1">
+                        {profile.isVerified ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-agro-700" />
+                            <span className="text-agro-700">Verified</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-4 h-4 text-amber-600" />
+                            <span className="text-amber-600">Pending Verification</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -1003,7 +1118,9 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Role</p>
-                      <p className="text-sm font-medium text-gray-800">Job Seeker</p>
+                      <p className="text-sm font-medium text-gray-800">
+                        {profile.role ? profile.role.replace(/_/g, ' ') : 'Job Seeker'}
+                      </p>
                     </div>
                   </div>
                 </div>

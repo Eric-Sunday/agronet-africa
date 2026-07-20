@@ -1,14 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, SlidersHorizontal, MapPin, Star, ShieldCheck, Zap,
   CheckCircle, Clock, Users, Award, CalendarCheck, Filter, X,
-  Leaf, ChevronRight
+  Leaf, ChevronRight, WifiOff, AlertCircle
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import BookingModal from './BookingModal';
-import { MOCK_EXPERTS, EXPERT_SPECIALTIES } from '../../data/mockData';
+import { fetchExperts, fetchExpertSpecialties } from '../../lib/api';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ExpertDirectoryPage — /expert
@@ -17,30 +17,66 @@ import { MOCK_EXPERTS, EXPERT_SPECIALTIES } from '../../data/mockData';
 export default function ExpertDirectoryPage({ currentUser, onLogout, onAddContract }) {
   const navigate = useNavigate();
 
+  // ── Remote experts data ───────────────────────────────────────────────────
+  const [experts, setExperts]   = useState([]);
+  const [specialties, setSpecialties] = useState(['Soil Agronomist', 'Veterinary Doctor', 'Crop Pathologist', 'Irrigation Engineer']);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError]   = useState(null);
+
+  useEffect(() => {
+    async function loadExperts() {
+      try {
+        // Load experts
+        const expertsRes = await fetchExperts({ limit: 1000 });
+        setExperts(Array.isArray(expertsRes.experts) ? expertsRes.experts : []);
+
+        // Load specialties
+        try {
+          const specs = await fetchExpertSpecialties();
+          if (Array.isArray(specs) && specs.length > 0) {
+            setSpecialties(specs);
+          }
+        } catch (err) {
+          console.warn('Could not load specialties, using defaults:', err);
+          // Keep default specialties if API fails
+        }
+
+        setApiError(null);
+      } catch (err) {
+        console.error('Failed to fetch experts:', err);
+        setApiError('Could not connect to the backend. Check your network or VITE_API_URL setting.');
+        setExperts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadExperts();
+  }, []);
+
   // ── Filter State ──────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery]       = useState('');
-  const [selectedSpec, setSelectedSpec]     = useState('All Specialties');
-  const [selectedAvail, setSelectedAvail]   = useState('All');
+  const [searchQuery, setSearchQuery]         = useState('');
+  const [selectedSpec, setSelectedSpec]       = useState('All Specialties');
+  const [selectedAvail, setSelectedAvail]     = useState('All');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // ── Booking Modal State ───────────────────────────────────────────────────
-  const [bookingExpert, setBookingExpert]   = useState(null);
+  const [bookingExpert, setBookingExpert] = useState(null);
 
   // ── Filtered Experts ──────────────────────────────────────────────────────
   const filtered = useMemo(() => {
-    return MOCK_EXPERTS.filter((exp) => {
+    return experts.filter((exp) => {
       const q = searchQuery.toLowerCase();
       const matchSearch =
         !q ||
         exp.name.toLowerCase().includes(q) ||
         exp.specialty.toLowerCase().includes(q) ||
-        exp.location.toLowerCase().includes(q) ||
-        exp.bio.toLowerCase().includes(q);
+        (exp.location || '').toLowerCase().includes(q) ||
+        (exp.bio || '').toLowerCase().includes(q);
       const matchSpec  = selectedSpec  === 'All Specialties' || exp.specialty === selectedSpec;
       const matchAvail = selectedAvail === 'All' || exp.availability === selectedAvail;
       return matchSearch && matchSpec && matchAvail;
     });
-  }, [searchQuery, selectedSpec, selectedAvail]);
+  }, [experts, searchQuery, selectedSpec, selectedAvail]);
 
   // ── Booking handler ───────────────────────────────────────────────────────
   const handleInitiateEscrow = ({ expert, pkg, description, amount }) => {
@@ -98,7 +134,7 @@ export default function ExpertDirectoryPage({ currentUser, onLogout, onAddContra
           Specialty
         </label>
         <div className="space-y-1">
-          {['All Specialties', ...EXPERT_SPECIALTIES].map((spec) => (
+          {['All Specialties', ...specialties].map((spec) => (
             <button
               key={spec}
               id={`filter-spec-${spec.replace(/\s/g, '-').toLowerCase()}`}
@@ -262,46 +298,89 @@ export default function ExpertDirectoryPage({ currentUser, onLogout, onAddContra
 
           {/* ── Expert Grid ── */}
           <main className="flex-1 min-w-0">
-            {/* Result count (desktop) */}
-            <div className="hidden md:flex items-center justify-between mb-5">
-              <p className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">{filtered.length}</span> expert{filtered.length !== 1 ? 's' : ''} found
-              </p>
-            </div>
-
-            {filtered.length === 0 ? (
-              /* Empty state */
-              <div className="glass-card p-16 flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <Leaf className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="font-display font-semibold text-gray-700 text-lg">No Experts Found</h3>
-                <p className="text-sm text-gray-500 mt-1 max-w-xs">
-                  Try adjusting your filters or clearing your search to see all available specialists.
-                </p>
-                <button
-                  onClick={() => { setSelectedSpec('All Specialties'); setSelectedAvail('All'); setSearchQuery(''); }}
-                  className="btn-secondary mt-4 !px-6 !py-2.5 text-sm"
-                >
-                  Clear Filters
-                </button>
+            {/* API Error banner */}
+            {apiError && (
+              <div className="flex items-start gap-3 p-4 mb-5 bg-amber-50 border-2 border-amber-200 rounded-xl text-amber-800">
+                <WifiOff className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-medium">{apiError}</p>
               </div>
-            ) : (
+            )}
+
+            {/* Loading skeleton */}
+            {isLoading ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {filtered.map((expert) => (
-                  <ExpertCard
-                    key={expert.id}
-                    expert={expert}
-                    onBook={() => setBookingExpert(expert)}
-                    formatNaira={formatNaira}
-                    renderStars={renderStars}
-                  />
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="glass-card p-5 animate-pulse">
+                    <div className="flex gap-4 mb-4">
+                      <div className="w-16 h-16 bg-gray-200 rounded-xl flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                        <div className="h-3 bg-gray-200 rounded w-1/3" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-gray-200 rounded" />
+                      <div className="h-3 bg-gray-200 rounded w-5/6" />
+                    </div>
+                  </div>
                 ))}
               </div>
+            ) : (
+              <>
+                {/* Result count (desktop) */}
+                {!apiError && (
+                  <div className="hidden md:flex items-center justify-between mb-5">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold text-gray-900">{filtered.length}</span> expert{filtered.length !== 1 ? 's' : ''} found
+                    </p>
+                  </div>
+                )}
+
+                {filtered.length === 0 ? (
+                  /* Empty state */
+                  <div className="glass-card p-16 flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                      <Leaf className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="font-display font-semibold text-gray-700 text-lg">
+                      {apiError ? 'Expert Directory Unavailable' : experts.length === 0 ? 'No Experts Registered Yet' : 'No Experts Found'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1 max-w-xs">
+                      {apiError
+                        ? 'The expert directory could not be loaded. Please try again later.'
+                        : experts.length === 0
+                        ? 'There are no verified experts in the database yet. Check back soon as we onboard specialists.'
+                        : 'Try adjusting your filters or clearing your search to see all available specialists.'}
+                    </p>
+                    {!apiError && experts.length > 0 && (
+                      <button
+                        onClick={() => { setSelectedSpec('All Specialties'); setSelectedAvail('All'); setSearchQuery(''); }}
+                        className="btn-secondary mt-4 !px-6 !py-2.5 text-sm"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    {filtered.map((expert) => (
+                      <ExpertCard
+                        key={expert.id}
+                        expert={expert}
+                        onBook={() => setBookingExpert(expert)}
+                        formatNaira={formatNaira}
+                        renderStars={renderStars}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>
       </div>
+
 
       {/* ── Booking Modal ── */}
       {bookingExpert && (

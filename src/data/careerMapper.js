@@ -1,5 +1,5 @@
 /**
- * AgroNet Africa — Dream-to-Role Career Mapper Engine
+ * Agro Africa Net — Dream-to-Role Career Mapper Engine
  * 
  * A rule-based script that reads a user's dream career text,
  * identifies keywords, maps them to career paths, and produces
@@ -34,7 +34,7 @@ const CAREER_PATHS = [
         description: 'Complete hands-on training in NFT, DWC, ebb-and-flow, and aeroponics systems. Learn climate control and environmental monitoring.',
         skills: ['NFT Systems', 'Deep Water Culture', 'Climate Control Automation'],
         type: 'badge',
-        badge: { name: 'Certified Hydroponics Technician', issuer: 'AgroNet Africa Academy', icon: '🏅' },
+        badge: { name: 'Certified Hydroponics Technician', issuer: 'Agro Africa Net Academy', icon: '🏅' },
       },
       {
         phase: 'Advanced Training',
@@ -166,7 +166,7 @@ const CAREER_PATHS = [
         description: 'Master greenhouse construction types, ventilation systems, irrigation design, and environmental control technology.',
         skills: ['Greenhouse Design', 'Ventilation Engineering', 'Automated Irrigation'],
         type: 'badge',
-        badge: { name: 'Greenhouse Agronomy Specialist', issuer: 'AgroNet Africa Academy', icon: '🏅' },
+        badge: { name: 'Greenhouse Agronomy Specialist', issuer: 'Agro Africa Net Academy', icon: '🏅' },
       },
       {
         phase: 'Advanced Training',
@@ -298,7 +298,7 @@ const CAREER_PATHS = [
         description: 'Get certified in precision planting, soil testing, integrated nutrient management, and pest & weed control for field crops.',
         skills: ['Soil Testing & Analysis', 'Integrated Nutrient Management', 'Pest & Weed Control'],
         type: 'badge',
-        badge: { name: 'Certified Field Agronomist', issuer: 'AgroNet Africa Academy', icon: '🏅' },
+        badge: { name: 'Certified Field Agronomist', issuer: 'Agro Africa Net Academy', icon: '🏅' },
       },
       {
         phase: 'Advanced Training',
@@ -430,7 +430,7 @@ const CAREER_PATHS = [
         description: 'Become certified in soil sampling protocols, laboratory analysis techniques, pH management, and fertilizer recommendations.',
         skills: ['Lab Analysis Techniques', 'pH Management', 'Fertilizer Recommendations'],
         type: 'badge',
-        badge: { name: 'Certified Soil Analyst', issuer: 'AgroNet Africa Academy', icon: '🏅' },
+        badge: { name: 'Certified Soil Analyst', issuer: 'Agro Africa Net Academy', icon: '🏅' },
       },
       {
         phase: 'Advanced Training',
@@ -560,10 +560,10 @@ const DEFAULT_PATH = {
       phase: 'Specialization',
       duration: '3 – 6 months',
       title: 'AgroNet Core Certification',
-      description: 'Complete the AgroNet Africa foundational certification covering modern agricultural techniques, safety protocols, and digital tools.',
+      description: 'Complete the Agro Africa Net foundational certification covering modern agricultural techniques, safety protocols, and digital tools.',
       skills: ['Modern Ag Techniques', 'Safety Protocols', 'Digital Farm Tools'],
       type: 'badge',
-      badge: { name: 'AgroNet Africa Certified Professional', issuer: 'AgroNet Africa Academy', icon: '🏅' },
+      badge: { name: 'Agro Africa Net Certified Professional', issuer: 'Agro Africa Net Academy', icon: '🏅' },
     },
     {
       phase: 'Advanced Training',
@@ -597,7 +597,7 @@ const DEFAULT_PATH = {
     {
       id: 'mapped_job_gen_2',
       title: 'Agricultural Extension Officer',
-      company: 'AgroNet Africa Foundation',
+      company: 'Agro Africa Net Foundation',
       location: 'Dakar, Senegal',
       type: 'Full-time',
       salary: 'CFA 450,000 – CFA 700,000/month',

@@ -1,19 +1,54 @@
 /**
- * AgroNet Africa — Unified Mock Data
- * Re-exports core data + adds Agrilencer escrow contract seeds
+ * AgroNet Africa — Essential Configuration Data
+ * 
+ * This file contains configuration and service definitions.
+ * All user data, jobs, and experts are now fetched from the live Render backend.
  */
 
-// Re-export everything from the main database
-export {
-  USER_ROLES,
-  ROLE_INFO,
-  MOCK_USERS,
-  MOCK_JOBS,
-  PLATFORM_STATS,
-  MOCK_EXPERTS,
-  EXPERT_SPECIALTIES,
-  BOOKING_PACKAGES,
-} from './mockDatabase';
+// ===== BOOKING PACKAGES (Agrilencer Service Tiers) =====
+export const BOOKING_PACKAGES = [
+  {
+    id: 'quick-consult',
+    label: 'Quick Consultation',
+    description: 'Phone/video call for initial assessment',
+    rateKey: 'hourly_rate',
+    multiplier: 1,
+    duration: '1 hour',
+    included: [
+      'Initial problem assessment',
+      'Preliminary recommendations',
+      'Follow-up resources',
+    ],
+  },
+  {
+    id: 'site-visit',
+    label: 'Site Visit & Report',
+    description: 'In-person farm visit with written diagnostics',
+    rateKey: 'project_rate',
+    multiplier: 1,
+    duration: '1 day',
+    included: [
+      'Full farm walkthrough',
+      'Soil/water/crop samples',
+      '5-10 page diagnostic report',
+      'Treatment plan with cost estimates',
+    ],
+  },
+  {
+    id: 'intensive-support',
+    label: 'Intensive Support (1-3 months)',
+    description: 'Ongoing consultation and implementation support',
+    rateKey: 'project_rate',
+    multiplier: 3,
+    duration: '3 months',
+    included: [
+      'Bi-weekly farm visits',
+      'Treatment plan implementation',
+      'Weekly email support',
+      'Real-time problem-solving',
+    ],
+  },
+];
 
 // ===== CONTRACT STATE MACHINE =====
 export const CONTRACT_STATES = [
@@ -22,82 +57,6 @@ export const CONTRACT_STATES = [
   { id: 'milestone', label: 'Milestone Completed', color: 'text-agro-700',  bg: 'bg-agro-50',   border: 'border-agro-200',   step: 2 },
   { id: 'released',  label: 'Released / Paid',    color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', step: 3 },
 ];
-
-// ===== HOMEPAGE PREVIEW DATA =====
-
-export const HOME_JOBS = [
-  {
-    id: 'hj_001',
-    title: 'Farm Manager',
-    company: 'GreenFields Agro Ltd.',
-    location: 'Ibadan, Oyo State',
-    type: 'Full-time',
-    salary: '\u20a6350,000 – \u20a6500,000/mo',
-    tags: ['Management', 'Crop Science'],
-    postedAgo: '2 days ago',
-    urgent: true,
-  },
-  {
-    id: 'hj_002',
-    title: 'Senior Agronomist',
-    company: 'HarvestPrime Farms',
-    location: 'Kano, Kano State',
-    type: 'Full-time',
-    salary: '\u20a6450,000 – \u20a6650,000/mo',
-    tags: ['Agronomy', 'Research'],
-    postedAgo: '5 days ago',
-    urgent: false,
-  },
-  {
-    id: 'hj_003',
-    title: 'Irrigation Technician',
-    company: 'SaharaGreen Farms',
-    location: 'Kaduna, Kaduna State',
-    type: 'Contract',
-    salary: '\u20a6200,000 – \u20a6300,000/mo',
-    tags: ['Engineering', 'Water Mgmt'],
-    postedAgo: '1 week ago',
-    urgent: false,
-  },
-  {
-    id: 'hj_004',
-    title: 'Poultry Operations Supervisor',
-    company: 'NorthStar Poultry Ltd.',
-    location: 'Enugu, Enugu State',
-    type: 'Full-time',
-    salary: '\u20a6280,000 – \u20a6420,000/mo',
-    tags: ['Livestock', 'Operations'],
-    postedAgo: '3 days ago',
-    urgent: true,
-  },
-];
-
-export const HOME_EXPERTS = [
-  {
-    id: 'he_001',
-    name: 'Dr. Chukwuemeka Alabi',
-    initials: 'CA',
-    specialty: 'Soil Agronomist',
-    location: 'Ibadan, Oyo',
-    rating: 4.9,
-    reviewCount: 87,
-    hourlyRate: 45000,
-    availability: 'Available',
-    isVerified: true,
-    isPremium: true,
-    avatarColor: 'from-agro-600 to-agro-800',
-  },
-  {
-    id: 'he_002',
-    name: 'Dr. Ngozi Eze',
-    initials: 'NE',
-    specialty: 'Veterinary Doctor',
-    location: 'Enugu, Enugu',
-    rating: 4.8,
-    reviewCount: 62,
-    hourlyRate: 40000,
-    availability: 'Available',
-    isVerified: true,
     isPremium: true,
     avatarColor: 'from-earth-600 to-earth-800',
   },

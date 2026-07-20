@@ -1,5 +1,5 @@
 /**
- * AgroNet Africa — Mock Database
+ * Agro Africa Net — Mock Database
  * 
  * Tracks 3 user roles:
  *  1. Agribusiness_Employer  — Companies posting agricultural jobs
@@ -53,7 +53,7 @@ export const ROLE_INFO = {
     title: 'Field Evangelist',
     subtitle: 'Champion agricultural innovation in your community',
     description:
-      'Become a community ambassador for AgroNet Africa. Spread the word about sustainable farming practices, onboard new users, and earn rewards for growing the network.',
+      'Become a community ambassador for Agro Africa Net. Spread the word about sustainable farming practices, onboard new users, and earn rewards for growing the network.',
     icon: 'Megaphone',
     color: 'soil',
     benefits: [
