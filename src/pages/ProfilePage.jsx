@@ -338,7 +338,7 @@ function DreamToRoleMapper() {
 
         {/* Example chips */}
         <div>
-          <p className="text-xs font-medium text-gray-400 mb-2.5">Ã°Å¸â€™Â¡ Try an example:</p>
+          <p className="text-xs font-medium text-gray-400 mb-2.5">💡 Try an example:</p>
           <div className="flex flex-wrap gap-2">
             {exampleDreams.slice(0, 4).map((example, i) => (
               <button
@@ -759,7 +759,7 @@ export default function ProfilePage({ gapBadgeUnlocked = false, currentUser, onL
                       <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
                         <MapPin className="w-4 h-4" />
                         {profile.location}
-                        <span className="text-gray-300 mx-1">Ã¢â‚¬Â¢</span>
+                        <span className="text-gray-300 mx-1">&bull;</span>
                         <Mail className="w-4 h-4" />
                         {profile.email}
                       </p>
